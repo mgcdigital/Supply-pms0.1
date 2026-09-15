@@ -82,28 +82,34 @@
     <!-- ================= VIEW 2: ACTIVE SITE TASKS ================= -->
     <section id="viewTasks" class="view-section">
       <!-- Active Site Banner -->
+      <!-- Active Site Banner Bar -->
       <div class="site-banner-bar">
         <div class="site-banner-left">
           <span class="pin-icon-white"><i class="fa-solid fa-map-pin"></i></span>
           <span class="banner-label">Active Project:</span>
           <span class="banner-site-name" id="currentSiteTitle">Site Name</span>
-          <span class="banner-site-badge" id="currentSiteProgressBadge">0% Complete</span>
+          <span class="banner-site-badge" id="currentSiteProgressBadge">
+            <i class="fa-solid fa-circle-check"></i> <span id="currentSiteProgressText">0% Complete</span>
+          </span>
         </div>
         <div class="site-banner-actions">
-          <button class="btn btn-excel-green" id="btnExportCurrentSiteExcel" title="Download Updated Excel Sheet with all tasks, plan vs actual">
-            <i class="fa-solid fa-file-excel"></i> Export Excel
-          </button>
-          <button class="btn btn-white" id="btnEditCurrentSiteMeta">
-            <i class="fa-solid fa-pen-to-square"></i> Project Details
-          </button>
-          <button class="btn btn-emerald" id="btnOpenAddTaskModal">
+          <button class="btn btn-emerald" id="btnOpenAddTaskModal" title="Add a single task">
             <i class="fa-solid fa-plus"></i> Add Task
           </button>
-          <button class="btn btn-primary-outline" id="btnOpenBulkAddTasksModal" title="Add multiple tasks at once via paste or Excel import">
-            <i class="fa-solid fa-table-list"></i> Bulk Add Tasks
+          <button class="btn btn-emerald-secondary" id="btnOpenBulkAddTasksModal" title="Add multiple tasks at once via paste or Excel import">
+            <i class="fa-solid fa-layer-group"></i> Bulk Add Tasks
           </button>
-          <button class="btn btn-white" id="btnBackToSites">
-            <i class="fa-solid fa-arrow-left"></i> Back to Sites
+          <button class="btn btn-glass" id="btnEditCurrentSiteMeta" title="Edit project metadata & stakeholders">
+            <i class="fa-solid fa-pen-to-square"></i> Project Details
+          </button>
+          <button class="btn btn-glass" id="btnExportCurrentSiteExcel" title="Download Excel workbook with tasks">
+            <i class="fa-solid fa-file-excel"></i> Export Excel
+          </button>
+          <button class="btn btn-glass btn-sheets-sync" id="btnOpenSheetsConfigModal" title="Configure live Google Sheets auto-sync webhook">
+            <i class="fa-solid fa-file-waveform text-emerald-300"></i> Sheets Sync <span class="sync-indicator-dot" id="sheetsSyncDot"></span>
+          </button>
+          <button class="btn btn-glass" id="btnBackToSites" title="Return to directory">
+            <i class="fa-solid fa-arrow-left"></i> Back
           </button>
         </div>
       </div>
@@ -707,6 +713,66 @@ Example:
     </div>
   </div>
 
-  <script src="app.js?v=6"></script>
+  <!-- ================= MODAL 5: GOOGLE SHEETS REAL-TIME SYNC CONFIG ================= -->
+  <div class="modal-backdrop" id="modalSheetsSync">
+    <div class="modal-card" style="max-width: 650px;">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3 class="modal-title"><i class="fa-solid fa-file-waveform text-emerald"></i> Google Sheets Auto-Sync Setup</h3>
+          <p class="modal-subtitle">Service PMS DB Google Sheet me real-time automatic entries bhejne ke liye Web App URL set karein</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseSheetsModal" title="Close dialog">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="bulk-guide-card">
+          <div class="guide-header">
+            <i class="fa-solid fa-circle-check text-emerald"></i>
+            <strong>Real-time Auto Logging Activated</strong>
+          </div>
+          <p class="guide-text">
+            Jab bhi aap <strong>Project Details save</strong> karenge, <strong>Task progress update</strong> karenge, ya <strong>New Tasks add</strong> karenge, Google Apps Script webhook ke zariye aapki Google Sheet (<strong>Service PMS DB</strong>) me exact row real-time me append ho jaayegi!
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Google Apps Script Web App URL *</label>
+          <input type="url" id="inputSheetsWebhookUrl" class="form-control" placeholder="https://script.google.com/macros/s/.../exec">
+          <span style="font-size: 0.74rem; color: #64748b; margin-top: 3px;">
+            Google Sheets me <code>Extensions &gt; Apps Script &gt; Deploy &gt; Web app</code> se mila hua URL yahan paste karein.
+          </span>
+        </div>
+
+        <div class="form-section-card">
+          <div class="section-card-title">
+            <i class="fa-solid fa-table-columns"></i> Google Sheet Columns Mapping (Row 1)
+          </div>
+          <p style="font-size: 0.75rem; color: #475569; margin: 0; line-height: 1.4;">
+            Aapki Sheet1 me Row 1 headers: <code>A: Unique ID</code> | <code>B: Timestamp</code> | <code>C: Project Name</code> | <code>D: Action / Activity</code> | <code>E: PO Number</code> | <code>F: Client</code> | <code>G: Stakeholders</code> | <code>H: Status</code> | <code>I: Updated By</code>
+          </p>
+        </div>
+
+        <div class="sync-test-box">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button type="button" class="btn btn-emerald-secondary btn-sm" id="btnTestSheetsSync">
+              <i class="fa-solid fa-paper-plane"></i> Send Test Entry to Google Sheet
+            </button>
+            <span class="sync-status-badge" id="syncStatusBadge">Ready</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary-outline" id="btnCancelSheetsModal">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveSheetsConfig">
+          <i class="fa-solid fa-check"></i> Save & Enable Auto-Sync
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=7"></script>
 </body>
 </html>

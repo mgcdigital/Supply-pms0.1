@@ -468,54 +468,163 @@ body {
 
 /* ================= ACTIVE SITE VIEW ================= */
 .site-banner-bar {
-  background: #5b21b6;
+  background: linear-gradient(135deg, #581c87 0%, #6b21a8 50%, #5b21b6 100%);
   color: white;
-  padding: 12px 24px;
+  padding: 10px 20px;
   border-radius: var(--radius-md);
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  box-shadow: 0 4px 14px rgba(91, 33, 182, 0.2);
+  box-shadow: 0 4px 18px rgba(88, 28, 135, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .site-banner-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .pin-icon-white {
   color: #f87171;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
 
 .banner-label {
   font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.3px;
+  font-size: 0.9rem;
+  letter-spacing: 0.2px;
+  color: #f3e8ff;
 }
 
 .banner-site-name {
-  background: rgba(255, 255, 255, 0.15);
-  padding: 3px 12px;
-  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(4px);
+  padding: 4px 12px;
+  border-radius: 6px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
+/* Status Pill: bg-emerald-50 text-emerald-700 border border-emerald-200 */
 .banner-site-badge {
-  background: #10b981;
-  color: white;
-  font-size: 0.75rem;
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+  border: 1px solid #a7f3d0 !important;
+  font-size: 0.74rem;
   font-weight: 700;
   padding: 3px 10px;
   border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .site-banner-actions {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Action Button: Primary Emerald (Add Task) */
+.btn-emerald {
+  background: #059669 !important; /* bg-emerald-600 */
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: var(--radius-pill);
+  padding: 7px 15px !important;
+  font-size: 0.82rem !important;
+  border: 1px solid #047857;
+  box-shadow: 0 2px 5px rgba(5, 150, 105, 0.35);
+  transition: all 0.18s ease;
+}
+
+.btn-emerald:hover {
+  background: #047857 !important; /* hover:bg-emerald-700 */
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(4, 120, 87, 0.45);
+}
+
+/* Action Button: Secondary Emerald (Bulk Add) */
+.btn-emerald-secondary {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: var(--radius-pill);
+  padding: 7px 14px !important;
+  font-size: 0.82rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.18s ease;
+}
+
+.btn-emerald-secondary:hover {
+  background: #059669 !important;
+  transform: translateY(-1px);
+}
+
+/* Secondary Action Buttons: Glassmorphism style */
+.btn-glass {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  backdrop-filter: blur(6px);
+  border-radius: var(--radius-pill);
+  padding: 7px 13px !important;
+  font-size: 0.8rem !important;
+  font-weight: 500;
+  transition: all 0.18s ease;
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  transform: translateY(-1px);
+}
+
+/* Google Sheets Sync button with glowing dot */
+.btn-sheets-sync {
+  position: relative;
+}
+
+.sync-indicator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  display: inline-block;
+  margin-left: 2px;
+  transition: all 0.2s;
+}
+
+.sync-indicator-dot.active {
+  background: #34d399;
+  box-shadow: 0 0 6px #34d399;
+}
+
+.sync-status-badge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.sync-status-badge.connected {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.sync-test-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
 }
 
 /* ================= PROJECT INFO HEADER CARD ================= */

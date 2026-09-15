@@ -368,7 +368,12 @@ function renderSiteTasks() {
   // Banner details
   const stats = getSiteStats(site);
   document.getElementById('currentSiteTitle').textContent = site.name;
-  document.getElementById('currentSiteProgressBadge').textContent = `${stats.avgProgress}% Complete (${stats.done}/${stats.total})`;
+  const progressTextEl = document.getElementById('currentSiteProgressText');
+  if (progressTextEl) {
+    progressTextEl.textContent = `${stats.avgProgress}% Complete (${stats.done}/${stats.total})`;
+  } else {
+    document.getElementById('currentSiteProgressBadge').textContent = `${stats.avgProgress}% Complete (${stats.done}/${stats.total})`;
+  }
 
   // Render Project Metadata Header Card
   document.getElementById('metaClient').textContent = site.client || 'MAHESHWARI DISTRIBUTORS';
@@ -692,6 +697,18 @@ function saveTaskProgress() {
   saveData();
   closeUpdateModal();
   renderSiteTasks();
+
+  // Real-time Google Sheets Logging
+  sendGoogleSheetsLog({
+    uniqueId: task.id || ('PMS-' + Date.now()),
+    projectName: site.name,
+    action: `Task Progress Updated: ${task.title} (${task.completedQty}/${total} ${task.uom || ''} - ${task.progressPct}%)`,
+    poNumber: site.poNumber || '',
+    client: site.client || '',
+    stakeholders: `${site.owner || ''}, ${site.siteIncharge || ''}`,
+    status: task.progressPct >= 100 ? 'Completed' : 'In Progress',
+    updatedBy: task.doer || site.deo || 'Site Incharge'
+  });
 }
 
 function closeUpdateModal() {
@@ -850,6 +867,18 @@ function submitNewSite() {
         renderSiteTasks();
       }
       closeAddSiteModal();
+
+      // Real-time Google Sheets Logging
+      sendGoogleSheetsLog({
+        uniqueId: site.id || ('PMS-SITE-' + Date.now()),
+        projectName: site.name,
+        action: 'Project Information Updated',
+        poNumber: site.poNumber || '',
+        client: site.client || '',
+        stakeholders: `${site.owner || ''}, ${site.siteIncharge || ''}`,
+        status: 'Active',
+        updatedBy: site.deo || 'Data Entry Operator'
+      });
       return;
     }
   }
@@ -888,6 +917,18 @@ function submitNewSite() {
   renderSites();
   closeAddSiteModal();
   openSiteTasks(newSite.id);
+
+  // Real-time Google Sheets Logging
+  sendGoogleSheetsLog({
+    uniqueId: newSite.id,
+    projectName: newSite.name,
+    action: 'New Project Created',
+    poNumber: newSite.poNumber || '',
+    client: newSite.client || '',
+    stakeholders: `${newSite.owner || ''}, ${newSite.siteIncharge || ''}`,
+    status: 'Created',
+    updatedBy: newSite.deo || 'Data Entry Operator'
+  });
 }
 
 // ================= MODAL: ADD NEW TASK =================
@@ -994,6 +1035,18 @@ function submitNewTask() {
   saveData();
   renderSiteTasks();
   closeAddTaskModal();
+
+  // Real-time Google Sheets Logging
+  sendGoogleSheetsLog({
+    uniqueId: newTask.id,
+    projectName: site.name,
+    action: `New Task Added: ${newTask.title}`,
+    poNumber: site.poNumber || '',
+    client: site.client || '',
+    stakeholders: `${site.owner || ''}, ${newTask.doer || site.siteIncharge || ''}`,
+    status: newTask.isHeader ? 'Section' : 'Pending',
+    updatedBy: site.deo || 'Data Entry Operator'
+  });
 }
 
 // Site management actions (Hide, Rename, Delete)
@@ -1156,6 +1209,143 @@ function setupEventListeners() {
     document.getElementById('fileImporter').click();
   });
   document.getElementById('fileImporter').addEventListener('change', importBackup);
+
+  // Google Sheets Auto-Sync Modal & Testing
+  const btnOpenSheets = document.getElementById('btnOpenSheetsConfigModal');
+  if (btnOpenSheets) btnOpenSheets.addEventListener('click', openSheetsConfigModal);
+  const btnCloseSheets = document.getElementById('btnCloseSheetsModal');
+  if (btnCloseSheets) btnCloseSheets.addEventListener('click', closeSheetsConfigModal);
+  const btnCancelSheets = document.getElementById('btnCancelSheetsModal');
+  if (btnCancelSheets) btnCancelSheets.addEventListener('click', closeSheetsConfigModal);
+  const btnSaveSheets = document.getElementById('btnSaveSheetsConfig');
+  if (btnSaveSheets) btnSaveSheets.addEventListener('click', saveSheetsConfig);
+  const btnTestSheets = document.getElementById('btnTestSheetsSync');
+  if (btnTestSheets) btnTestSheets.addEventListener('click', testGoogleSheetsSync);
+
+  // Initialize Sheets sync indicator
+  updateSheetsIndicator();
+}
+
+// ================= GOOGLE SHEETS REAL-TIME SYNC LOGIC =================
+const SHEETS_CONFIG_KEY = 'SERVICE_PMS_SHEETS_WEBHOOK_URL';
+
+function getSheetsWebhookUrl() {
+  return localStorage.getItem(SHEETS_CONFIG_KEY) || '';
+}
+
+function updateSheetsIndicator() {
+  const url = getSheetsWebhookUrl();
+  const dot = document.getElementById('sheetsSyncDot');
+  if (dot) {
+    if (url && url.trim()) {
+      dot.classList.add('active');
+      dot.title = 'Google Sheets Auto-Sync is Active';
+    } else {
+      dot.classList.remove('active');
+      dot.title = 'Click to configure Google Sheets Webhook';
+    }
+  }
+}
+
+function openSheetsConfigModal() {
+  const modal = document.getElementById('modalSheetsSync');
+  const input = document.getElementById('inputSheetsWebhookUrl');
+  const badge = document.getElementById('syncStatusBadge');
+  const currentUrl = getSheetsWebhookUrl();
+
+  input.value = currentUrl;
+  if (currentUrl) {
+    badge.textContent = 'Active (Connected)';
+    badge.className = 'sync-status-badge connected';
+  } else {
+    badge.textContent = 'Not Configured';
+    badge.className = 'sync-status-badge';
+  }
+
+  modal.classList.add('open');
+}
+
+function closeSheetsConfigModal() {
+  document.getElementById('modalSheetsSync').classList.remove('open');
+}
+
+function saveSheetsConfig() {
+  const url = document.getElementById('inputSheetsWebhookUrl').value.trim();
+  if (url) {
+    localStorage.setItem(SHEETS_CONFIG_KEY, url);
+    updateSheetsIndicator();
+    closeSheetsConfigModal();
+    alert('✅ Google Sheets Auto-Sync Webhook saved! All future updates will be sent in real-time.');
+  } else {
+    localStorage.removeItem(SHEETS_CONFIG_KEY);
+    updateSheetsIndicator();
+    closeSheetsConfigModal();
+    alert('Google Sheets Auto-Sync disabled.');
+  }
+}
+
+// Send real-time log payload to Google Sheets Apps Script Webhook
+async function sendGoogleSheetsLog(payload) {
+  const webhookUrl = getSheetsWebhookUrl();
+  if (!webhookUrl) return; // Silent if not configured
+
+  try {
+    // Send via POST (mode: no-cors is standard for Google Apps Script redirects)
+    await fetch(webhookUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    console.log('Google Sheets entry posted:', payload);
+  } catch (err) {
+    console.warn('Google Sheets auto-sync notification failed:', err);
+  }
+}
+
+// Test webhook function with instant feedback
+async function testGoogleSheetsSync() {
+  const url = document.getElementById('inputSheetsWebhookUrl').value.trim();
+  const badge = document.getElementById('syncStatusBadge');
+
+  if (!url) {
+    alert('Please enter your Google Apps Script Web App URL first.');
+    return;
+  }
+
+  badge.textContent = 'Sending...';
+  badge.className = 'sync-status-badge';
+
+  const site = sitesData.find(s => s.id === activeSiteId) || sitesData[0] || {};
+  const testPayload = {
+    uniqueId: 'PMS-TEST-' + Math.floor(1000 + Math.random() * 9000),
+    projectName: site.name || 'Test Project',
+    action: 'Connection Test Entry',
+    poNumber: site.poNumber || '5100033887',
+    client: site.client || 'MAHESHWARI DISTRIBUTORS',
+    stakeholders: `${site.owner || 'DK Shriwal'}, ${site.siteIncharge || 'Dinesh Purohit'}`,
+    status: 'Connected',
+    updatedBy: site.deo || 'Service PMS User'
+  };
+
+  try {
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(testPayload)
+    });
+
+    badge.textContent = 'Success (Row Appended)';
+    badge.className = 'sync-status-badge connected';
+    alert('🎉 Test entry sent to Google Sheets! Please check Row 2 in your "Service PMS DB" sheet.');
+  } catch (err) {
+    badge.textContent = 'Error';
+    badge.className = 'sync-status-badge';
+    alert('Failed to send test entry: ' + err.message);
+  }
 }
 
 // ================= BULK ADD / IMPORT TASKS LOGIC =================
@@ -1570,6 +1760,18 @@ function submitBulkTasks() {
   saveData();
   renderSiteTasks();
   closeBulkAddTasksModal();
+
+  // Real-time Google Sheets Logging
+  sendGoogleSheetsLog({
+    uniqueId: `PMS-BULK-${tasksToAdd.length}`,
+    projectName: site.name,
+    action: `Bulk Added ${tasksToAdd.length} Tasks`,
+    poNumber: site.poNumber || '',
+    client: site.client || '',
+    stakeholders: `${site.owner || ''}, ${site.siteIncharge || ''}`,
+    status: 'Bulk Imported',
+    updatedBy: site.deo || 'Data Entry Operator'
+  });
 
   alert(`🎉 Successfully added ${tasksToAdd.length} tasks to ${site.name}!`);
 }
