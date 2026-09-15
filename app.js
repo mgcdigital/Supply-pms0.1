@@ -502,6 +502,16 @@ function renderSiteTasks() {
     // If it's a section header row (e.g. WBS Category)
     if (task.isHeader) {
       tr.className = 'header-row';
+      const sectionActionHtml = currentUserRole === 'Super Admin'
+        ? `<div class="action-buttons-cell">
+            <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit Section">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="btn-icon-del" onclick="deleteSection('${task.id}')" title="Delete Section">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>`
+        : `<span class="view-only-badge"><i class="fa-solid fa-lock"></i> View Only</span>`;
       tr.innerHTML = `
         <td class="uid-cell">
           <i class="fa-solid fa-folder-open text-primary"></i> ${task.id}
@@ -510,9 +520,7 @@ function renderSiteTasks() {
         <td colspan="6" class="task-title" style="font-weight: 700; color: #1e1b4b;">
           ${task.title}
         </td>
-        <td style="text-align: center;">
-          <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">SECTION</span>
-        </td>
+        <td style="text-align: center;">${sectionActionHtml}</td>
       `;
       tbody.appendChild(tr);
       return;
@@ -588,11 +596,14 @@ function renderTaskActionColumn(task) {
   if (currentUserRole === 'Super Admin') {
     return `
       <div class="action-buttons-cell">
-        <button class="btn-table-update" onclick="openUpdateModal('${task.id}')" title="Update progress">
-          <i class="fa-solid fa-pen-to-square"></i> Update
+        <button class="btn-icon-update" onclick="openUpdateModal('${task.id}')" title="Update progress">
+          <i class="fa-solid fa-rotate-right"></i>
         </button>
-        <button class="btn-table-del" onclick="deleteTask('${task.id}')" title="Delete task">
-          <i class="fa-solid fa-trash-can"></i> Delete
+        <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit task details">
+          <i class="fa-solid fa-pen"></i>
+        </button>
+        <button class="btn-icon-del" onclick="deleteTask('${task.id}')" title="Delete task">
+          <i class="fa-solid fa-trash-can"></i>
         </button>
       </div>
     `;
@@ -600,6 +611,122 @@ function renderTaskActionColumn(task) {
     // Normal User / Admin: View Only
     return `<span class="view-only-badge"><i class="fa-solid fa-lock"></i> View Only</span>`;
   }
+}
+
+// ================= DELETE SECTION =================
+function deleteSection(sectionId) {
+  if (currentUserRole !== 'Super Admin') {
+    alert('Access Denied: Only Super Admin can delete sections.');
+    return;
+  }
+
+  const site = sitesData.find(s => s.id === activeSiteId);
+  if (!site) return;
+
+  const section = site.tasks.find(t => t.id === sectionId);
+  if (!section) return;
+
+  if (!confirm(`Delete section "${section.title}"?\n\nNote: This only deletes the section header. Tasks inside it will remain.`)) return;
+
+  site.tasks = site.tasks.filter(t => t.id !== sectionId);
+  saveData();
+  renderSiteTasks();
+
+  sendGoogleSheetsLog({
+    uniqueId: sectionId,
+    projectName: site.name,
+    action: `Section Deleted: ${section.title}`,
+    poNumber: site.poNumber || '',
+    client: site.client || '',
+    stakeholders: '',
+    status: 'Deleted',
+    updatedBy: currentUserRole
+  });
+}
+
+// ================= EDIT TASK MODAL =================
+function openEditTaskModal(taskId) {
+  const site = sitesData.find(s => s.id === activeSiteId);
+  if (!site) return;
+  const task = site.tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  document.getElementById('editTaskId').value = task.id;
+  document.getElementById('editTaskSubtitle').textContent = `ID: ${task.id}`;
+  document.getElementById('editTaskWbs').value = task.wbs || '';
+  document.getElementById('editTaskType').value = task.isHeader ? 'header' : 'task';
+  document.getElementById('editTaskTitle').value = task.title || '';
+  document.getElementById('editTaskTotalQty').value = task.totalQty !== undefined && task.totalQty !== null ? task.totalQty : '';
+  document.getElementById('editTaskCompletedQty').value = task.completedQty !== undefined ? task.completedQty : '';
+  document.getElementById('editTaskUom').value = task.uom || '';
+  document.getElementById('editTaskDoer').value = task.doer || '';
+  document.getElementById('editTaskManpower').value = task.manpower || '';
+  document.getElementById('editTaskStartDate').value = task.startDate || '';
+  document.getElementById('editTaskEndDate').value = task.endDate || '';
+  document.getElementById('editTaskRemark').value = task.remark || '';
+
+  // Show/hide qty fields
+  const qtySection = document.getElementById('editQtySection');
+  if (qtySection) qtySection.style.display = task.isHeader ? 'none' : 'flex';
+
+  document.getElementById('modalEditTask').classList.add('active');
+}
+
+function closeEditTaskModal() {
+  document.getElementById('modalEditTask').classList.remove('active');
+}
+
+function saveEditTask() {
+  const taskId = document.getElementById('editTaskId').value;
+  const site = sitesData.find(s => s.id === activeSiteId);
+  if (!site) return;
+  const task = site.tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  const title = document.getElementById('editTaskTitle').value.trim();
+  if (!title) { alert('Task description cannot be empty.'); return; }
+
+  const isHeader = document.getElementById('editTaskType').value === 'header';
+  task.wbs = document.getElementById('editTaskWbs').value.trim();
+  task.title = title;
+  task.isHeader = isHeader;
+  task.doer = document.getElementById('editTaskDoer').value.trim();
+  task.manpower = document.getElementById('editTaskManpower').value.trim();
+  task.startDate = document.getElementById('editTaskStartDate').value;
+  task.endDate = document.getElementById('editTaskEndDate').value;
+  task.remark = document.getElementById('editTaskRemark').value.trim();
+
+  if (!isHeader) {
+    const total = parseFloat(document.getElementById('editTaskTotalQty').value);
+    const completed = parseFloat(document.getElementById('editTaskCompletedQty').value);
+    task.uom = document.getElementById('editTaskUom').value.trim();
+    if (!isNaN(total)) task.totalQty = total;
+    if (!isNaN(completed)) {
+      task.completedQty = completed;
+      task.progressPct = task.totalQty > 0 ? Math.round((completed / task.totalQty) * 100) : 0;
+    }
+    // Recalculate duration
+    if (task.startDate && task.endDate) {
+      const d1 = new Date(task.startDate);
+      const d2 = new Date(task.endDate);
+      task.duration = Math.max(1, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)));
+    }
+  }
+
+  saveData();
+  closeEditTaskModal();
+  renderSiteTasks();
+
+  sendGoogleSheetsLog({
+    uniqueId: task.id,
+    projectName: site.name,
+    action: `Task Edited: ${task.title}`,
+    poNumber: site.poNumber || '',
+    client: site.client || '',
+    stakeholders: '',
+    status: isHeader ? 'Section' : (task.progressPct >= 100 ? 'Completed' : task.progressPct > 0 ? 'In Progress' : 'Pending'),
+    updatedBy: currentUserRole
+  });
 }
 
 // ================= RENDER GANTT TIMELINE =================
@@ -1357,6 +1484,15 @@ function setupEventListeners() {
       openSheetsConfigModal();
     });
   }
+
+  // Edit Task Modal
+  document.getElementById('btnCloseEditTaskModal')?.addEventListener('click', closeEditTaskModal);
+  document.getElementById('btnCancelEditTaskModal')?.addEventListener('click', closeEditTaskModal);
+  document.getElementById('btnSaveEditTask')?.addEventListener('click', saveEditTask);
+  document.getElementById('editTaskType')?.addEventListener('change', (e) => {
+    const qtySection = document.getElementById('editQtySection');
+    if (qtySection) qtySection.style.display = e.target.value === 'header' ? 'none' : 'flex';
+  });
 
   // Initialize Sheets sync indicator
   updateSheetsIndicator();
