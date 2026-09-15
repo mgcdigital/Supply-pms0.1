@@ -99,6 +99,9 @@
           <button class="btn btn-emerald" id="btnOpenAddTaskModal">
             <i class="fa-solid fa-plus"></i> Add Task
           </button>
+          <button class="btn btn-primary-outline" id="btnOpenBulkAddTasksModal" title="Add multiple tasks at once via paste or Excel import">
+            <i class="fa-solid fa-table-list"></i> Bulk Add Tasks
+          </button>
           <button class="btn btn-white" id="btnBackToSites">
             <i class="fa-solid fa-arrow-left"></i> Back to Sites
           </button>
@@ -540,7 +543,7 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-light" id="btnCancelAddTaskModal">Cancel</button>
+        <button class="btn btn-secondary-outline" id="btnCancelAddTaskModal">Cancel</button>
         <button class="btn btn-primary" id="btnSubmitAddTask">
           <i class="fa-solid fa-plus"></i> Add Task
         </button>
@@ -548,6 +551,162 @@
     </div>
   </div>
 
-  <script src="app.js?v=5"></script>
+  <!-- ================= MODAL 4: BULK ADD TASKS (EXCEL PASTE / IMPORT) ================= -->
+  <div class="modal-backdrop" id="modalBulkAddTasks">
+    <div class="modal-card modal-card-xl">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3 class="modal-title">Bulk Add / Import Service Tasks</h3>
+          <p class="modal-subtitle" id="bulkAddSiteLabel">Ek sath multiple tasks Excel/Sheets se copy-paste karein ya fast table me type karein</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseBulkAddModal" title="Close dialog">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Mode Tabs: Direct Paste vs Dynamic Spreadsheet Grid -->
+        <div class="bulk-nav-tabs">
+          <button class="bulk-tab-btn active" id="tabBtnBulkPaste">
+            <i class="fa-solid fa-paste"></i> Quick Copy-Paste (Google Sheet / Excel)
+          </button>
+          <button class="bulk-tab-btn" id="tabBtnBulkTable">
+            <i class="fa-solid fa-table-cells"></i> Multi-Row Interactive Table
+          </button>
+          <button class="bulk-tab-btn" id="tabBtnBulkFile">
+            <i class="fa-solid fa-file-arrow-up"></i> Upload Excel (.xlsx)
+          </button>
+        </div>
+
+        <!-- TAB 1: QUICK COPY-PASTE FROM GOOGLE SHEET / EXCEL -->
+        <div class="bulk-tab-content" id="bulkTabContentPaste">
+          <div class="bulk-guide-card">
+            <div class="guide-header">
+              <i class="fa-solid fa-lightbulb text-amber"></i>
+              <strong>Google Sheet / Excel se directly Copy-Paste karein:</strong>
+            </div>
+            <p class="guide-text">
+              Sheet se rows select karke <strong>Ctrl + C</strong> karein aur neeche box me <strong>Ctrl + V</strong> paste kar dein. Columns ka format:
+              <code>WBS / S.No &nbsp;|&nbsp; Work Description / Title &nbsp;|&nbsp; Doer &nbsp;|&nbsp; Duration (Days) &nbsp;|&nbsp; Start Date &nbsp;|&nbsp; End Date</code>
+              ya sirf <code>Work Description / Title</code>. System automatically sabhi rows ko tasks me convert kar lega!
+            </p>
+          </div>
+
+          <div class="form-group">
+            <div class="paste-textarea-header">
+              <label class="form-label">Paste Excel / Sheets Data Here:</label>
+              <button type="button" class="btn-link-xs" id="btnLoadSamplePaste">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Load Leaky Feeder Example Rows
+              </button>
+            </div>
+            <textarea id="bulkPasteInput" class="form-control bulk-textarea" rows="7" placeholder="Paste copied rows from Google Sheets / Excel here...
+Example:
+6	Shifting of OFC cable and LAN cable in underground (6000 MTR)	Ashok Menariya	10	2025-04-21	2026-03-30
+7	Laying of OFC cable and LAN cable in underground at proper height	Ashok Menariya	11	2025-04-25	2026-03-30
+8	Splicing of OFC cable	Ashok Menariya	12	2025-04-29	2026-03-30
+9	Crimping of LAN cable	Ashok Menariya	13	2025-05-03	2026-03-30"></textarea>
+          </div>
+
+          <!-- Common Defaults for Pasted Items -->
+          <div class="bulk-defaults-box">
+            <span class="defaults-title"><i class="fa-solid fa-sliders"></i> Default settings for imported rows:</span>
+            <div class="form-row">
+              <div class="form-group col-4">
+                <label class="form-label">Default Doer / Incharge</label>
+                <input type="text" id="bulkDefaultDoer" class="form-control" placeholder="Ashok Menariya">
+              </div>
+              <div class="form-group col-4">
+                <label class="form-label">Default Scope Qty</label>
+                <input type="number" id="bulkDefaultQty" class="form-control" value="1">
+              </div>
+              <div class="form-group col-4">
+                <label class="form-label">Default UOM</label>
+                <input type="text" id="bulkDefaultUOM" class="form-control" value="Mtr">
+              </div>
+            </div>
+          </div>
+
+          <div class="paste-action-bar">
+            <button class="btn btn-emerald" id="btnParsePastedRows">
+              <i class="fa-solid fa-arrows-rotate"></i> Parse & Preview Rows
+            </button>
+            <span class="preview-count-badge" id="parsedCountBadge" style="display:none;">0 rows detected</span>
+          </div>
+        </div>
+
+        <!-- TAB 2: INTERACTIVE MULTI-ROW SPREADSHEET TABLE -->
+        <div class="bulk-tab-content" id="bulkTabContentTable" style="display: none;">
+          <div class="bulk-table-toolbar">
+            <div class="toolbar-left">
+              <button class="btn btn-white btn-sm" id="btnAddGridRow">
+                <i class="fa-solid fa-plus text-emerald"></i> + Add 1 Row
+              </button>
+              <button class="btn btn-white btn-sm" id="btnAddGrid5Rows">
+                <i class="fa-solid fa-plus-minus text-primary"></i> + Add 5 Rows
+              </button>
+              <button class="btn btn-white btn-sm text-danger" id="btnClearGridRows">
+                <i class="fa-solid fa-trash-can"></i> Clear All
+              </button>
+            </div>
+            <span class="row-counter-text" id="gridRowCountText">Showing 5 rows</span>
+          </div>
+
+          <div class="bulk-grid-scroll-wrap">
+            <table class="bulk-grid-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">#</th>
+                  <th style="width: 80px;">WBS</th>
+                  <th style="min-width: 260px;">Task Title / Description *</th>
+                  <th style="width: 140px;">Doer</th>
+                  <th style="width: 75px;">Qty</th>
+                  <th style="width: 75px;">UOM</th>
+                  <th style="width: 75px;">Days</th>
+                  <th style="width: 125px;">Start Date</th>
+                  <th style="width: 125px;">End Date</th>
+                  <th style="width: 40px;"></th>
+                </tr>
+              </thead>
+              <tbody id="bulkGridTableBody">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 3: FILE UPLOAD (.XLSX) -->
+        <div class="bulk-tab-content" id="bulkTabContentFile" style="display: none;">
+          <div class="bulk-upload-dropzone" id="bulkFileDropzone">
+            <i class="fa-solid fa-file-excel dropzone-icon"></i>
+            <h4>Drag & Drop Excel (.xlsx) file here</h4>
+            <p>Ya apne computer se Excel file select karein</p>
+            <input type="file" id="bulkFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+            <button type="button" class="btn btn-primary" id="btnBrowseBulkFile">
+              <i class="fa-solid fa-folder-open"></i> Choose File
+            </button>
+            <span class="file-name-indicator" id="bulkFileNameIndicator"></span>
+          </div>
+        </div>
+
+        <!-- PREVIEW BOX (Shown for parsed items) -->
+        <div class="bulk-preview-container" id="bulkPreviewContainer" style="display: none;">
+          <div class="preview-header-bar">
+            <span><i class="fa-solid fa-list-check text-primary"></i> <strong>Tasks to be added (<span id="bulkTasksReadyCount">0</span>)</strong></span>
+            <button type="button" class="btn-link-xs text-danger" id="btnDiscardPreview">Discard</button>
+          </div>
+          <div class="preview-items-list" id="bulkPreviewItemsList"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary-outline" id="btnCancelBulkAddModal">Cancel</button>
+        <button class="btn btn-primary" id="btnSubmitBulkTasks">
+          <i class="fa-solid fa-cloud-arrow-up"></i> <span id="btnSubmitBulkText">Add All Tasks to Site</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=6"></script>
 </body>
 </html>

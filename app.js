@@ -1093,6 +1093,50 @@ function setupEventListeners() {
   document.getElementById('btnCancelAddTaskModal').addEventListener('click', closeAddTaskModal);
   document.getElementById('btnSubmitAddTask').addEventListener('click', submitNewTask);
 
+  // Bulk Add Tasks Modal
+  const btnOpenBulk = document.getElementById('btnOpenBulkAddTasksModal');
+  if (btnOpenBulk) btnOpenBulk.addEventListener('click', openBulkAddTasksModal);
+  const btnCloseBulk = document.getElementById('btnCloseBulkAddModal');
+  if (btnCloseBulk) btnCloseBulk.addEventListener('click', closeBulkAddTasksModal);
+  const btnCancelBulk = document.getElementById('btnCancelBulkAddModal');
+  if (btnCancelBulk) btnCancelBulk.addEventListener('click', closeBulkAddTasksModal);
+
+  // Bulk Tabs
+  document.getElementById('tabBtnBulkPaste').addEventListener('click', () => switchBulkTab('paste'));
+  document.getElementById('tabBtnBulkTable').addEventListener('click', () => switchBulkTab('table'));
+  document.getElementById('tabBtnBulkFile').addEventListener('click', () => switchBulkTab('file'));
+
+  // Paste Tab actions
+  document.getElementById('btnParsePastedRows').addEventListener('click', parsePastedRows);
+  document.getElementById('btnLoadSamplePaste').addEventListener('click', loadSamplePasteData);
+  document.getElementById('btnSubmitBulkTasks').addEventListener('click', submitBulkTasks);
+  document.getElementById('btnDiscardPreview').addEventListener('click', discardBulkPreview);
+
+  // Grid Tab actions
+  document.getElementById('btnAddGridRow').addEventListener('click', () => addGridRow());
+  document.getElementById('btnAddGrid5Rows').addEventListener('click', () => { for (let i = 0; i < 5; i++) addGridRow(); });
+  document.getElementById('btnClearGridRows').addEventListener('click', clearGridRows);
+
+  // File Tab actions
+  const fileDrop = document.getElementById('bulkFileDropzone');
+  const fileInput = document.getElementById('bulkFileInput');
+  const btnBrowse = document.getElementById('btnBrowseBulkFile');
+  if (btnBrowse && fileInput) {
+    btnBrowse.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleBulkFileSelect);
+  }
+  if (fileDrop) {
+    fileDrop.addEventListener('dragover', (e) => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+    fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
+    fileDrop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fileDrop.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleBulkFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
   // Hide/Show Qty fields if header is selected
   document.getElementById('newTaskType').addEventListener('change', (e) => {
     const isHeader = e.target.value === 'header';
@@ -1112,6 +1156,422 @@ function setupEventListeners() {
     document.getElementById('fileImporter').click();
   });
   document.getElementById('fileImporter').addEventListener('change', importBackup);
+}
+
+// ================= BULK ADD / IMPORT TASKS LOGIC =================
+let bulkParsedTasks = [];
+let activeBulkTab = 'paste';
+
+function openBulkAddTasksModal() {
+  const site = sitesData.find(s => s.id === activeSiteId);
+  if (!site) {
+    alert('Please select or open a site first.');
+    return;
+  }
+
+  document.getElementById('bulkAddSiteLabel').textContent = `Adding multiple tasks to: ${site.name}`;
+  document.getElementById('bulkDefaultDoer').value = site.siteIncharge || 'Ashok Menariya';
+  document.getElementById('bulkDefaultQty').value = '1';
+  document.getElementById('bulkDefaultUOM').value = 'Mtr';
+
+  // Reset inputs
+  document.getElementById('bulkPasteInput').value = '';
+  document.getElementById('parsedCountBadge').style.display = 'none';
+  bulkParsedTasks = [];
+  renderBulkPreview();
+
+  // Initialize table rows if empty
+  const tbody = document.getElementById('bulkGridTableBody');
+  if (tbody.children.length === 0) {
+    clearGridRows();
+    for (let i = 0; i < 5; i++) addGridRow();
+  }
+
+  switchBulkTab('paste');
+  document.getElementById('modalBulkAddTasks').classList.add('open');
+}
+
+function closeBulkAddTasksModal() {
+  document.getElementById('modalBulkAddTasks').classList.remove('open');
+  bulkParsedTasks = [];
+}
+
+function switchBulkTab(tabName) {
+  activeBulkTab = tabName;
+  const tabs = ['paste', 'table', 'file'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('tabBtnBulk' + t.charAt(0).toUpperCase() + t.slice(1));
+    const content = document.getElementById('bulkTabContent' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (t === tabName) {
+      if (btn) btn.classList.add('active');
+      if (content) content.style.display = 'flex';
+    } else {
+      if (btn) btn.classList.remove('active');
+      if (content) content.style.display = 'none';
+    }
+  });
+
+  const submitBtnText = document.getElementById('btnSubmitBulkText');
+  if (tabName === 'table') {
+    submitBtnText.textContent = 'Add All Table Rows';
+  } else {
+    submitBtnText.textContent = 'Add All Tasks to Site';
+  }
+}
+
+// Sample Leaky Feeder Rows from user's Google Sheet
+function loadSamplePasteData() {
+  const sample = `6\tShifting of OFC cable and LAN cable in underground (6000 MTR)\tAshok Menariya\t10\t2025-04-21\t2026-03-30
+7\tLaying of OFC cable and LAN cable in underground at proper height (6000 MTR)\tAshok Menariya\t11\t2025-04-25\t2026-03-30
+8\tSplicing of OFC cable\tAshok Menariya\t12\t2025-04-29\t2026-03-30
+9\tCrimping of LAN cable\tAshok Menariya\t13\t2025-05-03\t2026-03-30
+10\tInstallation of CCTV camera, Power supply, junction box, power cable & LAN cable\tAshok Menariya\t14\t2025-05-07\t2026-03-30
+11\tShifting of cable 3Cx2.5sqmm in underground\tAshok Menariya\t15\t2025-05-11\t2026-03-30
+12\tLaying of cable 3Cx2.5sqmm in underground\tAshok Menariya\t16\t2025-05-15\t2026-03-30
+13\tInstallation of lights 70W to 165W with junction box, glands, bracket\tAshok Menariya\t17\t2025-05-19\t2026-03-30
+14\tInstallation of lighting transformer 5kVA at proper place in underground\tAshok Menariya\t18\t2025-05-23\t2026-03-30
+15\tShifting and Laying of Telephone cable in underground at proper height\tAshok Menariya\t19\t2025-05-27\t2026-03-30`;
+
+  document.getElementById('bulkPasteInput').value = sample;
+  parsePastedRows();
+}
+
+// Parse pasted data from Google Sheet / Excel (Tab or Comma or Semicolon separated)
+function parsePastedRows() {
+  const text = document.getElementById('bulkPasteInput').value.trim();
+  if (!text) {
+    alert('Please paste rows into the text area first.');
+    return;
+  }
+
+  const site = sitesData.find(s => s.id === activeSiteId);
+  const defaultDoer = document.getElementById('bulkDefaultDoer').value.trim() || (site ? site.siteIncharge : 'Site Incharge');
+  const defaultQty = parseFloat(document.getElementById('bulkDefaultQty').value) || 1;
+  const defaultUOM = document.getElementById('bulkDefaultUOM').value.trim() || 'Mtr';
+
+  const lines = text.split(/\r?\n/);
+  const parsed = [];
+  let currentNum = site ? site.tasks.length + 1 : 1;
+
+  lines.forEach(line => {
+    const raw = line.trim();
+    if (!raw) return;
+
+    // Detect delimiter: tab, comma, pipe
+    let cols = [];
+    if (raw.includes('\t')) {
+      cols = raw.split('\t');
+    } else if (raw.includes('|')) {
+      cols = raw.split('|');
+    } else if (raw.includes(',')) {
+      cols = raw.split(',');
+    } else {
+      cols = [raw];
+    }
+    cols = cols.map(c => c.trim());
+
+    // Skip known header lines
+    const firstColLower = (cols[0] || '').toLowerCase();
+    if (firstColLower.includes('wbs') || firstColLower.includes('s.no') || firstColLower.includes('description') || firstColLower.includes('task title')) {
+      return;
+    }
+
+    let wbs = '';
+    let title = '';
+    let doer = defaultDoer;
+    let duration = 7;
+    let startDate = '';
+    let endDate = '';
+    let qty = defaultQty;
+    let uom = defaultUOM;
+
+    if (cols.length === 1) {
+      // Just title
+      title = cols[0];
+    } else if (cols.length === 2) {
+      // WBS + Title
+      wbs = cols[0];
+      title = cols[1];
+    } else if (cols.length >= 3) {
+      // If col 0 looks like WBS or index
+      wbs = cols[0];
+      title = cols[1];
+      
+      // Let's analyze remaining cols
+      for (let i = 2; i < cols.length; i++) {
+        const val = cols[i];
+        if (!val) continue;
+
+        // Check if date (YYYY-MM-DD or DD/MM/YYYY or DD-MM-YYYY)
+        const dateMatch = parseAnyDate(val);
+        if (dateMatch) {
+          if (!startDate) {
+            startDate = dateMatch;
+          } else if (!endDate) {
+            endDate = dateMatch;
+          }
+          continue;
+        }
+
+        // Check if numeric duration
+        if (!isNaN(val) && Number(val) > 0 && Number(val) <= 500 && duration === 7 && i <= 4) {
+          duration = parseInt(val, 10);
+          continue;
+        }
+
+        // Check if Doer (contains letters)
+        if (/[a-zA-Z]/.test(val) && doer === defaultDoer) {
+          doer = val;
+          continue;
+        }
+      }
+    }
+
+    if (!title) return;
+
+    // Check if title has qty hint like "(6000 MTR)" or "(5 NOS)"
+    const qtyMatch = title.match(/\((\d+(?:\.\d+)?)\s*([a-zA-Z]+)\)/i);
+    if (qtyMatch) {
+      qty = parseFloat(qtyMatch[1]);
+      uom = qtyMatch[2];
+    }
+
+    const taskUID = `PMS${String(currentNum++).padStart(5, '0')}`;
+
+    parsed.push({
+      id: taskUID,
+      wbs: wbs,
+      title: title,
+      totalQty: qty,
+      completedQty: 0,
+      uom: uom,
+      doer: doer,
+      duration: duration || 7,
+      startDate: startDate || new Date().toISOString().split('T')[0],
+      endDate: endDate || '',
+      progressPct: 0,
+      remark: '',
+      isHeader: false
+    });
+  });
+
+  if (parsed.length === 0) {
+    alert('No valid task rows could be parsed. Please check the text format.');
+    return;
+  }
+
+  bulkParsedTasks = parsed;
+  renderBulkPreview();
+
+  const badge = document.getElementById('parsedCountBadge');
+  badge.textContent = `✓ ${parsed.length} Tasks Ready to Add`;
+  badge.style.display = 'inline-block';
+}
+
+function parseAnyDate(str) {
+  if (!str) return null;
+  const s = str.trim();
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // DD/MM/YYYY or DD-MM-YYYY
+  const m1 = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m1) {
+    const day = m1[1].padStart(2, '0');
+    const month = m1[2].padStart(2, '0');
+    const year = m1[3];
+    return `${year}-${month}-${day}`;
+  }
+  return null;
+}
+
+function renderBulkPreview() {
+  const container = document.getElementById('bulkPreviewContainer');
+  const countSpan = document.getElementById('bulkTasksReadyCount');
+  const list = document.getElementById('bulkPreviewItemsList');
+
+  if (bulkParsedTasks.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'flex';
+  countSpan.textContent = bulkParsedTasks.length;
+  list.innerHTML = '';
+
+  bulkParsedTasks.slice(0, 8).forEach((task, idx) => {
+    const item = document.createElement('div');
+    item.className = 'preview-item-row';
+    item.innerHTML = `
+      <span style="font-weight:700; color:#4f46e5; min-width:65px;">${task.id}</span>
+      <span style="color:#64748b; font-weight:600; min-width:40px;">${task.wbs || '-'}</span>
+      <span class="preview-item-title">${task.title}</span>
+      <div class="preview-item-meta">
+        <span><i class="fa-regular fa-user"></i> ${task.doer}</span>
+        <span><i class="fa-regular fa-calendar"></i> ${task.duration}d</span>
+        <span><strong>${task.totalQty} ${task.uom}</strong></span>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+
+  if (bulkParsedTasks.length > 8) {
+    const more = document.createElement('div');
+    more.style.textAlign = 'center';
+    more.style.fontSize = '0.76rem';
+    more.style.color = '#64748b';
+    more.style.padding = '4px 0';
+    more.textContent = `+ and ${bulkParsedTasks.length - 8} more tasks...`;
+    list.appendChild(more);
+  }
+}
+
+function discardBulkPreview() {
+  bulkParsedTasks = [];
+  renderBulkPreview();
+  document.getElementById('parsedCountBadge').style.display = 'none';
+}
+
+// Interactive Multi-Row Spreadsheet Table Methods
+function addGridRow(data = {}) {
+  const tbody = document.getElementById('bulkGridTableBody');
+  const rowCount = tbody.children.length + 1;
+  const tr = document.createElement('tr');
+
+  const defaultDoer = document.getElementById('bulkDefaultDoer').value || 'Ashok Menariya';
+  const defaultQty = document.getElementById('bulkDefaultQty').value || 1;
+  const defaultUOM = document.getElementById('bulkDefaultUOM').value || 'Mtr';
+  const today = new Date().toISOString().split('T')[0];
+
+  tr.innerHTML = `
+    <td style="text-align:center; color:#94a3b8; font-weight:600;">${rowCount}</td>
+    <td><input type="text" class="grid-wbs" placeholder="e.g. ${rowCount}" value="${data.wbs || ''}"></td>
+    <td><input type="text" class="grid-title" placeholder="Work description / task title" value="${data.title || ''}" required></td>
+    <td><input type="text" class="grid-doer" placeholder="Doer" value="${data.doer || defaultDoer}"></td>
+    <td><input type="number" step="any" min="0" class="grid-qty" value="${data.totalQty || defaultQty}"></td>
+    <td><input type="text" class="grid-uom" value="${data.uom || defaultUOM}"></td>
+    <td><input type="number" min="1" class="grid-dur" value="${data.duration || 7}"></td>
+    <td><input type="date" class="grid-start" value="${data.startDate || today}"></td>
+    <td><input type="date" class="grid-end" value="${data.endDate || ''}"></td>
+    <td style="text-align:center;">
+      <button type="button" class="bulk-row-del-btn" title="Remove row" onclick="this.closest('tr').remove(); updateGridCounter();">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </td>
+  `;
+
+  tbody.appendChild(tr);
+  updateGridCounter();
+}
+
+function clearGridRows() {
+  document.getElementById('bulkGridTableBody').innerHTML = '';
+  updateGridCounter();
+}
+
+function updateGridCounter() {
+  const count = document.getElementById('bulkGridTableBody').children.length;
+  document.getElementById('gridRowCountText').textContent = `Total rows: ${count}`;
+}
+
+// File Upload Handler (via SheetJS)
+function handleBulkFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) handleBulkFile(file);
+}
+
+function handleBulkFile(file) {
+  document.getElementById('bulkFileNameIndicator').textContent = `Selected: ${file.name}`;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      if (!json || json.length === 0) {
+        alert('Excel sheet is empty.');
+        return;
+      }
+
+      // Convert sheet data to text string and parse
+      const textLines = json.map(row => row.join('\t')).join('\n');
+      document.getElementById('bulkPasteInput').value = textLines;
+      switchBulkTab('paste');
+      parsePastedRows();
+      alert(`Excel sheet read successfully! Detected ${bulkParsedTasks.length} tasks.`);
+    } catch (err) {
+      console.error(err);
+      alert('Error reading Excel file. Please ensure it is a valid .xlsx or .xls file.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Final Submission: Add all tasks to active site
+function submitBulkTasks() {
+  const site = sitesData.find(s => s.id === activeSiteId);
+  if (!site) return;
+
+  let tasksToAdd = [];
+
+  if (activeBulkTab === 'table') {
+    // Collect from interactive table
+    const rows = document.querySelectorAll('#bulkGridTableBody tr');
+    let currentNum = site.tasks.length + 1;
+
+    rows.forEach(tr => {
+      const title = tr.querySelector('.grid-title').value.trim();
+      if (!title) return; // Skip blank rows
+
+      const wbs = tr.querySelector('.grid-wbs').value.trim();
+      const doer = tr.querySelector('.grid-doer').value.trim() || site.siteIncharge;
+      const qty = parseFloat(tr.querySelector('.grid-qty').value) || 1;
+      const uom = tr.querySelector('.grid-uom').value.trim() || 'Mtr';
+      const dur = parseInt(tr.querySelector('.grid-dur').value) || 7;
+      const start = tr.querySelector('.grid-start').value || new Date().toISOString().split('T')[0];
+      const end = tr.querySelector('.grid-end').value || '';
+
+      tasksToAdd.push({
+        id: `PMS${String(currentNum++).padStart(5, '0')}`,
+        wbs: wbs,
+        title: title,
+        totalQty: qty,
+        completedQty: 0,
+        uom: uom,
+        doer: doer,
+        duration: dur,
+        startDate: start,
+        endDate: end,
+        progressPct: 0,
+        remark: '',
+        isHeader: false
+      });
+    });
+  } else {
+    // If user clicked submit from Paste/File tab without pressing "Parse", parse now
+    if (bulkParsedTasks.length === 0) {
+      parsePastedRows();
+    }
+    tasksToAdd = bulkParsedTasks;
+  }
+
+  if (tasksToAdd.length === 0) {
+    alert('Please provide at least one valid task to add.');
+    return;
+  }
+
+  // Append all tasks to site
+  tasksToAdd.forEach(t => {
+    site.tasks.push(t);
+  });
+
+  saveData();
+  renderSiteTasks();
+  closeBulkAddTasksModal();
+
+  alert(`🎉 Successfully added ${tasksToAdd.length} tasks to ${site.name}!`);
 }
 
 // ================= EXPORT LIVE EXCEL SHEET (PLAN VS ACTUAL) =================
