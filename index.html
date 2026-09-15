@@ -235,11 +235,13 @@
   <div class="modal-backdrop" id="modalUpdateQty">
     <div class="modal-card">
       <div class="modal-header">
-        <div>
+        <div class="modal-title-wrap">
           <h3 class="modal-title" id="updateModalTaskTitle">Update Task Progress</h3>
-          <span class="modal-subtitle" id="updateModalTaskSub">ID: RDMS00003 | Dinesh Purohit</span>
+          <p class="modal-subtitle" id="updateModalTaskSub">ID: RDMS00003 | Dinesh Purohit</p>
         </div>
-        <button class="modal-close-btn" id="btnCloseUpdateModal">&times;</button>
+        <button class="modal-close-btn" id="btnCloseUpdateModal" title="Close dialog">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
       <div class="modal-body">
@@ -306,86 +308,137 @@
     </div>
   </div>
 
-  <!-- ================= MODAL 2: ADD NEW SITE / PROJECT ================= -->
+  <!-- ================= MODAL 2: ADD / EDIT PROJECT ================= -->
   <div class="modal-backdrop" id="modalAddSite">
-    <div class="modal-card" style="max-width: 680px;">
+    <div class="modal-card modal-card-lg">
       <div class="modal-header">
-        <div>
-          <h3 class="modal-title" id="siteModalHeading">Create New Service Site / Project</h3>
-          <span class="modal-subtitle">Project information & stakeholder details</span>
+        <div class="modal-title-wrap">
+          <h3 class="modal-title" id="siteModalHeading">Create New Service Project</h3>
+          <p class="modal-subtitle">Configure project information, timeline, and stakeholder details</p>
         </div>
-        <button class="modal-close-btn" id="btnCloseAddSiteModal">&times;</button>
+        <button class="modal-close-btn" id="btnCloseAddSiteModal" title="Close dialog">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
       <div class="modal-body">
-        <!-- Row 1: Project Title & Client -->
-        <div class="form-row">
-          <div class="form-group col-6">
-            <label class="form-label">PROJECT TITLE * :</label>
-            <input type="text" id="newSiteName" class="form-control" placeholder="e.g. RDM Service PMS of 2 MVA Portal Substation" required>
+        <!-- Section 1: Basic Project Details Card -->
+        <div class="form-section-card">
+          <div class="section-card-title">
+            <i class="fa-solid fa-folder-tree"></i> Project Information
           </div>
-          <div class="form-group col-6">
-            <label class="form-label">CLIENT / COMPANY :</label>
-            <input type="text" id="newSiteClient" class="form-control" placeholder="e.g. MAHESHWARI DISTRIBUTORS">
+
+          <!-- Row 1: Project Title & Client -->
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label class="form-label">Project Title <span class="text-danger">*</span></label>
+              <input type="text" id="newSiteName" class="form-control" placeholder="Project name or title" required>
+            </div>
+            <div class="form-group col-6">
+              <label class="form-label">Client / Company</label>
+              <input type="text" id="newSiteClient" class="form-control" placeholder="Client or organization name">
+            </div>
+          </div>
+
+          <!-- Row 2: PO Number & Data Entry Operator -->
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label class="form-label">PO Number</label>
+              <input type="text" id="newSitePO" class="form-control" placeholder="Enter purchase order number">
+            </div>
+            <div class="form-group col-6">
+              <label class="form-label">Data Entry Operator</label>
+              <input type="text" id="newSiteDEO" class="form-control" placeholder="Operator full name">
+            </div>
+          </div>
+
+          <!-- Row 3: Project Start Date & End Date -->
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label class="form-label">Project Start Date</label>
+              <input type="date" id="newSiteStartDate" class="form-control">
+            </div>
+            <div class="form-group col-6">
+              <label class="form-label">Project End Date</label>
+              <input type="date" id="newSiteEndDate" class="form-control">
+            </div>
           </div>
         </div>
 
-        <!-- Row 2: PO Number & Data Entry Operator -->
-        <div class="form-row">
-          <div class="form-group col-6">
-            <label class="form-label">PO NUMBER :</label>
-            <input type="text" id="newSitePO" class="form-control" placeholder="e.g. 5100033887">
+        <!-- Section 2: Key Stakeholders & Contact Info Card (Split Name & Phone) -->
+        <div class="form-section-card">
+          <div class="section-card-title">
+            <i class="fa-solid fa-address-book"></i> Key Stakeholders & Contacts
           </div>
-          <div class="form-group col-6">
-            <label class="form-label">DATA ENTRY OPERATOR :</label>
-            <input type="text" id="newSiteDEO" class="form-control" placeholder="e.g. Mahender Kumar Gurjar">
-          </div>
-        </div>
 
-        <!-- Row 3: Project Start Date & End Date -->
-        <div class="form-row">
-          <div class="form-group col-6">
-            <label class="form-label">PROJECT START DATE :</label>
-            <input type="date" id="newSiteStartDate" class="form-control">
+          <!-- Stakeholder: Project Owner -->
+          <div class="stakeholder-block">
+            <span class="stakeholder-role-label">Project Owner</span>
+            <div class="form-row">
+              <div class="form-group col-6">
+                <input type="text" id="newSiteOwnerName" class="form-control" placeholder="Owner full name (e.g. DK Shriwal)">
+              </div>
+              <div class="form-group col-6">
+                <div class="phone-input-group">
+                  <span class="phone-prefix">+91</span>
+                  <input type="tel" id="newSiteOwnerPhone" class="form-control phone-field" placeholder="10-digit mobile number">
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="form-group col-6">
-            <label class="form-label">PROJECT END DATE :</label>
-            <input type="date" id="newSiteEndDate" class="form-control">
-          </div>
-        </div>
 
-        <!-- Stakeholder Section Divider -->
-        <div style="font-size: 0.75rem; font-weight: 700; color: #4338ca; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-top: 6px;">
-          Key Stakeholders & Contact Info
-        </div>
+          <!-- Stakeholder: VRE -->
+          <div class="stakeholder-block">
+            <span class="stakeholder-role-label">VRE (Vendor Representative)</span>
+            <div class="form-row">
+              <div class="form-group col-6">
+                <input type="text" id="newSiteVREName" class="form-control" placeholder="VRE full name (e.g. Aarti Bala)">
+              </div>
+              <div class="form-group col-6">
+                <div class="phone-input-group">
+                  <span class="phone-prefix">+91</span>
+                  <input type="tel" id="newSiteVREPhone" class="form-control phone-field" placeholder="10-digit mobile number">
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <!-- Row 4: Owner & VRE -->
-        <div class="form-row">
-          <div class="form-group col-6">
-            <label class="form-label">OWNER (Name & Mobile) :</label>
-            <input type="text" id="newSiteOwner" class="form-control" placeholder="e.g. DK Shriwal :- 8233330578">
+          <!-- Stakeholder: Site Incharge -->
+          <div class="stakeholder-block">
+            <span class="stakeholder-role-label">Site Incharge</span>
+            <div class="form-row">
+              <div class="form-group col-6">
+                <input type="text" id="newSiteInchargeName" class="form-control" placeholder="Site incharge name (e.g. Dinesh Purohit)">
+              </div>
+              <div class="form-group col-6">
+                <div class="phone-input-group">
+                  <span class="phone-prefix">+91</span>
+                  <input type="tel" id="newSiteInchargePhone" class="form-control phone-field" placeholder="10-digit mobile number">
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="form-group col-6">
-            <label class="form-label">VRE (Name & Mobile) :</label>
-            <input type="text" id="newSiteVRE" class="form-control" placeholder="e.g. Aarti Bala :- 8824133320">
-          </div>
-        </div>
 
-        <!-- Row 5: Site Incharge & Process Coordinator -->
-        <div class="form-row">
-          <div class="form-group col-6">
-            <label class="form-label">SITE INCHARGE (Name & Mobile) :</label>
-            <input type="text" id="newSiteIncharge" class="form-control" placeholder="e.g. Dinesh Purohit :- 8003698657">
-          </div>
-          <div class="form-group col-6">
-            <label class="form-label">PROCESS COORDINATOR (Name & Mobile) :</label>
-            <input type="text" id="newSiteCoordinator" class="form-control" placeholder="e.g. Tulsi Sen :- 9875789834">
+          <!-- Stakeholder: Process Coordinator -->
+          <div class="stakeholder-block">
+            <span class="stakeholder-role-label">Process Coordinator</span>
+            <div class="form-row">
+              <div class="form-group col-6">
+                <input type="text" id="newSiteCoordinatorName" class="form-control" placeholder="Coordinator name (e.g. Tulsi Sen)">
+              </div>
+              <div class="form-group col-6">
+                <div class="phone-input-group">
+                  <span class="phone-prefix">+91</span>
+                  <input type="tel" id="newSiteCoordinatorPhone" class="form-control phone-field" placeholder="10-digit mobile number">
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Template Selection -->
         <div class="form-group" id="siteTemplateGroup">
-          <label class="form-label">INITIAL TASK TEMPLATE :</label>
+          <label class="form-label">Initial Task Template</label>
           <select id="newSiteTemplate" class="form-control">
             <option value="empty">Start with Empty Site (Add tasks manually)</option>
             <option value="substation">Copy Standard 2 MVA Substation Service Checklist (101 Tasks)</option>
@@ -394,9 +447,9 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-light" id="btnCancelAddSiteModal">Cancel</button>
+        <button class="btn btn-secondary-outline" id="btnCancelAddSiteModal">Cancel</button>
         <button class="btn btn-primary" id="btnSubmitAddSite">
-          <i class="fa-solid fa-check"></i> <span id="siteModalSubmitBtnText">Create Project</span>
+          <i class="fa-solid fa-floppy-disk"></i> <span id="siteModalSubmitBtnText">Create Project</span>
         </button>
       </div>
     </div>
@@ -406,11 +459,13 @@
   <div class="modal-backdrop" id="modalAddTask">
     <div class="modal-card">
       <div class="modal-header">
-        <div>
+        <div class="modal-title-wrap">
           <h3 class="modal-title">Add New Service Task</h3>
-          <span class="modal-subtitle" id="addTaskSiteLabel">Adding to current site</span>
+          <p class="modal-subtitle" id="addTaskSiteLabel">Adding to current site</p>
         </div>
-        <button class="modal-close-btn" id="btnCloseAddTaskModal">&times;</button>
+        <button class="modal-close-btn" id="btnCloseAddTaskModal" title="Close dialog">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
       <div class="modal-body">

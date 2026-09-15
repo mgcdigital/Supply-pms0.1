@@ -918,25 +918,190 @@ body {
   animation: modalSlideIn 0.2s ease-out;
 }
 
+.modal-header {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+  background: #ffffff;
+}
+
+.modal-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-right: 36px; /* Ensure space from top-right close icon */
+}
+
+.modal-title {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.modal-subtitle {
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  background: transparent;
+  border: 1px solid transparent;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.18s ease-in-out;
+}
+
+.modal-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #e2e8f0;
+}
+
+.modal-close-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #cbd5e1;
+}
+
 .modal-body {
-  padding: 24px 32px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
   overflow-x: hidden; /* Prevent horizontal scroll bar */
-  max-height: calc(90vh - 140px);
+  max-height: calc(88vh - 130px);
 }
 
 .modal-footer {
-  padding: 16px 32px;
+  padding: 16px 24px;
   background: #f8fafc;
   border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 12px;
   border-bottom-left-radius: var(--radius-lg);
   border-bottom-right-radius: var(--radius-lg);
+}
+
+/* Secondary Outline Button */
+.btn-secondary-outline {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-outline:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.btn-secondary-outline:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.35);
+}
+
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-glow), 0 0 0 1px var(--primary);
+}
+
+/* Grouping Card Styles for Modal Sections */
+.form-section-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-card-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #4338ca;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+  margin-bottom: 2px;
+}
+
+.stakeholder-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+
+.stakeholder-block:not(:last-child) {
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.stakeholder-role-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: 0.2px;
+}
+
+/* Phone input group with +91 prefix */
+.phone-input-group {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+.phone-prefix {
+  position: absolute;
+  left: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.phone-field {
+  padding-left: 42px !important;
+}
+
+/* Placeholder styling: subtle, light slate */
+::placeholder {
+  color: #94a3b8 !important;
+  font-weight: 400;
+  opacity: 1;
+}
+
+.text-danger {
+  color: #ef4444;
 }
 
 /* Excel Export Buttons */
@@ -1004,12 +1169,13 @@ body {
 }
 
 .form-label {
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 600;
   color: #334155;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .form-control {

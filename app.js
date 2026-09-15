@@ -699,6 +699,33 @@ function closeUpdateModal() {
   currentEditingTaskId = null;
 }
 
+// Helper to parse "Name :- Phone" or return parts
+function parseStakeholder(val) {
+  if (!val) return { name: '', phone: '' };
+  if (typeof val === 'object' && val !== null) {
+    return { name: val.name || '', phone: val.phone || '' };
+  }
+  const str = String(val).trim();
+  if (str.includes(':-')) {
+    const parts = str.split(':-');
+    return { name: parts[0].trim(), phone: (parts[1] || '').trim() };
+  }
+  if (str.includes('-') && !str.startsWith('-')) {
+    const parts = str.split('-');
+    return { name: parts[0].trim(), phone: (parts[1] || '').trim() };
+  }
+  return { name: str, phone: '' };
+}
+
+function formatStakeholder(name, phone) {
+  const n = (name || '').trim();
+  const p = (phone || '').trim();
+  if (n && p) return `${n} :- ${p}`;
+  if (n) return n;
+  if (p) return p;
+  return '';
+}
+
 // Site Modal State (Create or Edit)
 let editingSiteId = null;
 
@@ -721,10 +748,22 @@ function openAddSiteModal(siteToEdit = null) {
     document.getElementById('newSiteDEO').value = siteToEdit.deo || '';
     document.getElementById('newSiteStartDate').value = siteToEdit.startDate || '';
     document.getElementById('newSiteEndDate').value = siteToEdit.endDate || '';
-    document.getElementById('newSiteOwner').value = siteToEdit.owner || '';
-    document.getElementById('newSiteVRE').value = siteToEdit.vre || '';
-    document.getElementById('newSiteIncharge').value = siteToEdit.siteIncharge || '';
-    document.getElementById('newSiteCoordinator').value = siteToEdit.coordinator || '';
+
+    const ownerParts = parseStakeholder(siteToEdit.owner);
+    document.getElementById('newSiteOwnerName').value = ownerParts.name || 'DK Shriwal';
+    document.getElementById('newSiteOwnerPhone').value = ownerParts.phone || '8233330578';
+
+    const vreParts = parseStakeholder(siteToEdit.vre);
+    document.getElementById('newSiteVREName').value = vreParts.name || 'Aarti Bala';
+    document.getElementById('newSiteVREPhone').value = vreParts.phone || '8824133320';
+
+    const inchargeParts = parseStakeholder(siteToEdit.siteIncharge);
+    document.getElementById('newSiteInchargeName').value = inchargeParts.name || 'Dinesh Purohit';
+    document.getElementById('newSiteInchargePhone').value = inchargeParts.phone || '8003698657';
+
+    const coordParts = parseStakeholder(siteToEdit.coordinator);
+    document.getElementById('newSiteCoordinatorName').value = coordParts.name || 'Tulsi Sen';
+    document.getElementById('newSiteCoordinatorPhone').value = coordParts.phone || '9875789834';
   } else {
     editingSiteId = null;
     title.textContent = 'Create New Service Site / Project';
@@ -737,10 +776,18 @@ function openAddSiteModal(siteToEdit = null) {
     document.getElementById('newSiteDEO').value = 'Mahender Kumar Gurjar';
     document.getElementById('newSiteStartDate').value = new Date().toISOString().split('T')[0];
     document.getElementById('newSiteEndDate').value = '';
-    document.getElementById('newSiteOwner').value = 'DK Shriwal :- 8233330578';
-    document.getElementById('newSiteVRE').value = 'Aarti Bala :- 8824133320';
-    document.getElementById('newSiteIncharge').value = 'Dinesh Purohit :- 8003698657';
-    document.getElementById('newSiteCoordinator').value = 'Tulsi Sen :- 9875789834';
+
+    document.getElementById('newSiteOwnerName').value = 'DK Shriwal';
+    document.getElementById('newSiteOwnerPhone').value = '8233330578';
+
+    document.getElementById('newSiteVREName').value = 'Aarti Bala';
+    document.getElementById('newSiteVREPhone').value = '8824133320';
+
+    document.getElementById('newSiteInchargeName').value = 'Dinesh Purohit';
+    document.getElementById('newSiteInchargePhone').value = '8003698657';
+
+    document.getElementById('newSiteCoordinatorName').value = 'Tulsi Sen';
+    document.getElementById('newSiteCoordinatorPhone').value = '9875789834';
   }
 
   modal.classList.add('open');
@@ -764,10 +811,22 @@ function submitNewSite() {
   const deo = document.getElementById('newSiteDEO').value.trim() || 'Mahender Kumar Gurjar';
   const startDate = document.getElementById('newSiteStartDate').value;
   const endDate = document.getElementById('newSiteEndDate').value;
-  const owner = document.getElementById('newSiteOwner').value.trim() || 'DK Shriwal :- 8233330578';
-  const vre = document.getElementById('newSiteVRE').value.trim() || 'Aarti Bala :- 8824133320';
-  const siteIncharge = document.getElementById('newSiteIncharge').value.trim() || 'Dinesh Purohit :- 8003698657';
-  const coordinator = document.getElementById('newSiteCoordinator').value.trim() || 'Tulsi Sen :- 9875789834';
+
+  const ownerName = document.getElementById('newSiteOwnerName').value.trim() || 'DK Shriwal';
+  const ownerPhone = document.getElementById('newSiteOwnerPhone').value.trim() || '8233330578';
+  const owner = formatStakeholder(ownerName, ownerPhone);
+
+  const vreName = document.getElementById('newSiteVREName').value.trim() || 'Aarti Bala';
+  const vrePhone = document.getElementById('newSiteVREPhone').value.trim() || '8824133320';
+  const vre = formatStakeholder(vreName, vrePhone);
+
+  const siteInchargeName = document.getElementById('newSiteInchargeName').value.trim() || 'Dinesh Purohit';
+  const siteInchargePhone = document.getElementById('newSiteInchargePhone').value.trim() || '8003698657';
+  const siteIncharge = formatStakeholder(siteInchargeName, siteInchargePhone);
+
+  const coordinatorName = document.getElementById('newSiteCoordinatorName').value.trim() || 'Tulsi Sen';
+  const coordinatorPhone = document.getElementById('newSiteCoordinatorPhone').value.trim() || '9875789834';
+  const coordinator = formatStakeholder(coordinatorName, coordinatorPhone);
 
   // Check if editing existing site
   if (editingSiteId) {
