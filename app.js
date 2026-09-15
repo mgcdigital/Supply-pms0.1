@@ -1187,47 +1187,47 @@ function switchTaskSubView(subView) {
 // Event Listeners setup
 function setupEventListeners() {
   // Navigation dock buttons
-  document.getElementById('dockBtnSites').addEventListener('click', () => switchView('sites'));
-  document.getElementById('dockBtnTasks').addEventListener('click', () => switchView('tasks'));
-  document.getElementById('btnBackToSites').addEventListener('click', () => switchView('sites'));
+  document.getElementById('dockBtnSites')?.addEventListener('click', () => switchView('sites'));
+  document.getElementById('dockBtnTasks')?.addEventListener('click', () => switchView('tasks'));
+  document.getElementById('btnBackToSites')?.addEventListener('click', () => switchView('sites'));
 
   // Table vs Gantt view buttons
-  document.getElementById('btnViewTable').addEventListener('click', () => switchTaskSubView('table'));
-  document.getElementById('btnViewGantt').addEventListener('click', () => switchTaskSubView('gantt'));
+  document.getElementById('btnViewTable')?.addEventListener('click', () => switchTaskSubView('table'));
+  document.getElementById('btnViewGantt')?.addEventListener('click', () => switchTaskSubView('gantt'));
 
-  // Project Details edit button in Active Site view
-  document.getElementById('btnEditCurrentSiteMeta').addEventListener('click', () => {
+  // Edit current site meta (from banner)
+  document.getElementById('btnEditCurrentSiteMeta')?.addEventListener('click', () => {
     if (activeSiteId) {
       editSite(activeSiteId);
     }
   });
 
   // Filter & Search
-  document.getElementById('chkShowHidden').addEventListener('change', renderSites);
-  document.getElementById('selectActiveSiteDropdown').addEventListener('change', (e) => {
+  document.getElementById('chkShowHidden')?.addEventListener('change', renderSites);
+  document.getElementById('selectActiveSiteDropdown')?.addEventListener('change', (e) => {
     openSiteTasks(e.target.value);
   });
-  document.getElementById('selectStatusFilter').addEventListener('change', renderSiteTasks);
-  document.getElementById('taskSearchInput').addEventListener('input', renderSiteTasks);
-  document.getElementById('btnRefreshTasks').addEventListener('click', renderSiteTasks);
+  document.getElementById('selectStatusFilter')?.addEventListener('change', renderSiteTasks);
+  document.getElementById('taskSearchInput')?.addEventListener('input', renderSiteTasks);
+  document.getElementById('btnRefreshTasks')?.addEventListener('click', renderSiteTasks);
 
   // Update Task Modal
-  document.getElementById('btnCloseUpdateModal').addEventListener('click', closeUpdateModal);
-  document.getElementById('btnCancelUpdateModal').addEventListener('click', closeUpdateModal);
-  document.getElementById('btnSaveTaskProgress').addEventListener('click', saveTaskProgress);
-  document.getElementById('inputNewCompletedQty').addEventListener('input', updateModalLivePreview);
+  document.getElementById('btnCloseUpdateModal')?.addEventListener('click', closeUpdateModal);
+  document.getElementById('btnCancelUpdateModal')?.addEventListener('click', closeUpdateModal);
+  document.getElementById('btnSaveTaskProgress')?.addEventListener('click', saveTaskProgress);
+  document.getElementById('inputNewCompletedQty')?.addEventListener('input', updateModalLivePreview);
 
   // Add Site Modal
-  document.getElementById('btnOpenNewSiteModal').addEventListener('click', openAddSiteModal);
-  document.getElementById('btnCloseAddSiteModal').addEventListener('click', closeAddSiteModal);
-  document.getElementById('btnCancelAddSiteModal').addEventListener('click', closeAddSiteModal);
-  document.getElementById('btnSubmitAddSite').addEventListener('click', submitNewSite);
+  document.getElementById('btnOpenNewSiteModal')?.addEventListener('click', openAddSiteModal);
+  document.getElementById('btnCloseAddSiteModal')?.addEventListener('click', closeAddSiteModal);
+  document.getElementById('btnCancelAddSiteModal')?.addEventListener('click', closeAddSiteModal);
+  document.getElementById('btnSubmitAddSite')?.addEventListener('click', submitNewSite);
 
   // Add Task Modal
-  document.getElementById('btnOpenAddTaskModal').addEventListener('click', openAddTaskModal);
-  document.getElementById('btnCloseAddTaskModal').addEventListener('click', closeAddTaskModal);
-  document.getElementById('btnCancelAddTaskModal').addEventListener('click', closeAddTaskModal);
-  document.getElementById('btnSubmitAddTask').addEventListener('click', submitNewTask);
+  document.getElementById('btnOpenAddTaskModal')?.addEventListener('click', openAddTaskModal);
+  document.getElementById('btnCloseAddTaskModal')?.addEventListener('click', closeAddTaskModal);
+  document.getElementById('btnCancelAddTaskModal')?.addEventListener('click', closeAddTaskModal);
+  document.getElementById('btnSubmitAddTask')?.addEventListener('click', submitNewTask);
 
   // Bulk Add Tasks Modal
   const btnOpenBulk = document.getElementById('btnOpenBulkAddTasksModal');
@@ -1238,20 +1238,20 @@ function setupEventListeners() {
   if (btnCancelBulk) btnCancelBulk.addEventListener('click', closeBulkAddTasksModal);
 
   // Bulk Tabs
-  document.getElementById('tabBtnBulkPaste').addEventListener('click', () => switchBulkTab('paste'));
-  document.getElementById('tabBtnBulkTable').addEventListener('click', () => switchBulkTab('table'));
-  document.getElementById('tabBtnBulkFile').addEventListener('click', () => switchBulkTab('file'));
+  document.getElementById('tabBtnBulkPaste')?.addEventListener('click', () => switchBulkTab('paste'));
+  document.getElementById('tabBtnBulkTable')?.addEventListener('click', () => switchBulkTab('table'));
+  document.getElementById('tabBtnBulkFile')?.addEventListener('click', () => switchBulkTab('file'));
 
   // Paste Tab actions
-  document.getElementById('btnParsePastedRows').addEventListener('click', parsePastedRows);
-  document.getElementById('btnLoadSamplePaste').addEventListener('click', loadSamplePasteData);
-  document.getElementById('btnSubmitBulkTasks').addEventListener('click', submitBulkTasks);
-  document.getElementById('btnDiscardPreview').addEventListener('click', discardBulkPreview);
+  document.getElementById('btnParsePastedRows')?.addEventListener('click', parsePastedRows);
+  document.getElementById('btnLoadSamplePaste')?.addEventListener('click', loadSamplePasteData);
+  document.getElementById('btnSubmitBulkTasks')?.addEventListener('click', submitBulkTasks);
+  document.getElementById('btnDiscardPreview')?.addEventListener('click', discardBulkPreview);
 
   // Grid Tab actions
-  document.getElementById('btnAddGridRow').addEventListener('click', () => addGridRow());
-  document.getElementById('btnAddGrid5Rows').addEventListener('click', () => { for (let i = 0; i < 5; i++) addGridRow(); });
-  document.getElementById('btnClearGridRows').addEventListener('click', clearGridRows);
+  document.getElementById('btnAddGridRow')?.addEventListener('click', () => addGridRow());
+  document.getElementById('btnAddGrid5Rows')?.addEventListener('click', () => { for (let i = 0; i < 5; i++) addGridRow(); });
+  document.getElementById('btnClearGridRows')?.addEventListener('click', clearGridRows);
 
   // File Tab actions
   const fileDrop = document.getElementById('bulkFileDropzone');
@@ -1274,7 +1274,7 @@ function setupEventListeners() {
   }
 
   // Hide/Show Qty fields if header is selected
-  document.getElementById('newTaskType').addEventListener('change', (e) => {
+  document.getElementById('newTaskType')?.addEventListener('change', (e) => {
     const isHeader = e.target.value === 'header';
     document.getElementById('qtyUomSection').style.display = isHeader ? 'none' : 'flex';
   });
@@ -1287,11 +1287,11 @@ function setupEventListeners() {
   if (btnExcelBanner) btnExcelBanner.addEventListener('click', exportSiteToExcel);
 
   // Backup & Restore
-  document.getElementById('btnExportData').addEventListener('click', exportBackup);
-  document.getElementById('btnImportData').addEventListener('click', () => {
-    document.getElementById('fileImporter').click();
+  document.getElementById('btnExportData')?.addEventListener('click', exportBackup);
+  document.getElementById('btnImportData')?.addEventListener('click', () => {
+    document.getElementById('fileImporter')?.click();
   });
-  document.getElementById('fileImporter').addEventListener('change', importBackup);
+  document.getElementById('fileImporter')?.addEventListener('change', importBackup);
 
   // Google Sheets Auto-Sync Modal & Testing
   const btnOpenSheets = document.getElementById('btnOpenSheetsConfigModal');
