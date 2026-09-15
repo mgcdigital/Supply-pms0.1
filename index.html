@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service PMS</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS for Live Excel Export & Sync -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="style.css?v=5">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-left">
+      <button class="nav-icon-btn" id="menuToggleBtn" title="Toggle Menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="logo-box">
+        <div class="logo-icon"><i class="fa-solid fa-wrench"></i></div>
+        <div class="logo-text">
+          <span class="logo-title">Service PMS</span>
+          <span class="logo-subtitle">Site Execution Console</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="nav-right">
+      <button class="btn-excel-top" id="btnExportExcelTop" title="Export live project Excel sheet">
+        <i class="fa-solid fa-file-excel"></i> Export Excel Sheet
+      </button>
+      <div class="role-badge-group">
+        <span class="role-badge admin">Admin</span>
+        <span class="role-badge super-admin active">Super Admin</span>
+      </div>
+      <button class="logout-btn" id="btnExportData" title="Export Backup JSON">
+        <i class="fa-solid fa-cloud-arrow-down"></i> Backup
+      </button>
+      <button class="logout-btn" id="btnImportData" title="Import Data">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Restore
+      </button>
+      <input type="file" id="fileImporter" accept=".json" style="display:none;">
+    </div>
+  </header>
+
+  <!-- Main App Container -->
+  <main class="main-container">
+    
+    <!-- ================= VIEW 1: SITES DIRECTORY ================= -->
+    <section id="viewSites" class="view-section active">
+      <div class="section-header-card">
+        <div class="section-title-wrap">
+          <span class="pin-icon"><i class="fa-solid fa-map-pin"></i></span>
+          <div>
+            <h1 class="section-title">SITES & PROJECTS DIRECTORY</h1>
+            <p class="section-desc">Click on any site name to view & execute service tasks. Update completed quantities in real time.</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <label class="custom-checkbox-label">
+            <input type="checkbox" id="chkShowHidden">
+            <span class="checkbox-custom"></span>
+            Show Hidden Sites
+          </label>
+          <button class="btn btn-primary" id="btnOpenNewSiteModal">
+            <i class="fa-solid fa-plus"></i> Add New Site
+          </button>
+        </div>
+      </div>
+
+      <!-- Sites Grid -->
+      <div class="sites-grid" id="sitesGridContainer">
+        <!-- Dynamically rendered site cards -->
+      </div>
+    </section>
+
+    <!-- ================= VIEW 2: ACTIVE SITE TASKS ================= -->
+    <section id="viewTasks" class="view-section">
+      <!-- Active Site Banner -->
+      <div class="site-banner-bar">
+        <div class="site-banner-left">
+          <span class="pin-icon-white"><i class="fa-solid fa-map-pin"></i></span>
+          <span class="banner-label">Active Project:</span>
+          <span class="banner-site-name" id="currentSiteTitle">Site Name</span>
+          <span class="banner-site-badge" id="currentSiteProgressBadge">0% Complete</span>
+        </div>
+        <div class="site-banner-actions">
+          <button class="btn btn-excel-green" id="btnExportCurrentSiteExcel" title="Download Updated Excel Sheet with all tasks, plan vs actual">
+            <i class="fa-solid fa-file-excel"></i> Export Excel
+          </button>
+          <button class="btn btn-white" id="btnEditCurrentSiteMeta">
+            <i class="fa-solid fa-pen-to-square"></i> Project Details
+          </button>
+          <button class="btn btn-emerald" id="btnOpenAddTaskModal">
+            <i class="fa-solid fa-plus"></i> Add Task
+          </button>
+          <button class="btn btn-white" id="btnBackToSites">
+            <i class="fa-solid fa-arrow-left"></i> Back to Sites
+          </button>
+        </div>
+      </div>
+
+      <!-- Project Metadata Header Card (Matching Excel Header) -->
+      <div class="project-info-header-card" id="projectInfoHeaderCard">
+        <div class="proj-meta-grid">
+          <div class="proj-meta-col">
+            <div class="meta-row"><span class="meta-lbl">CLIENT:</span> <span class="meta-val" id="metaClient">-</span></div>
+            <div class="meta-row"><span class="meta-lbl">PO NUMBER:</span> <span class="meta-val" id="metaPO">-</span></div>
+            <div class="meta-row"><span class="meta-lbl">DATA ENTRY OP:</span> <span class="meta-val" id="metaDEO">-</span></div>
+          </div>
+          <div class="proj-meta-col">
+            <div class="meta-row"><span class="meta-lbl">START DATE:</span> <span class="meta-val" id="metaStartDate">-</span></div>
+            <div class="meta-row"><span class="meta-lbl">END DATE:</span> <span class="meta-val" id="metaEndDate">-</span></div>
+            <div class="meta-row"><span class="meta-lbl">DURATION:</span> <span class="meta-val" id="metaDuration">-</span></div>
+          </div>
+          <div class="proj-meta-col">
+            <div class="meta-row"><span class="meta-lbl">OWNER:</span> <span class="meta-val" id="metaOwner">-</span></div>
+            <div class="meta-row"><span class="meta-lbl">VRE:</span> <span class="meta-val" id="metaVRE">-</span></div>
+            <div class="meta-row"><span class="meta-lbl">SITE INCHARGE:</span> <span class="meta-val" id="metaIncharge">-</span></div>
+            <div class="meta-row"><span class="meta-lbl">COORDINATOR:</span> <span class="meta-val" id="metaCoordinator">-</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters & Controls Bar -->
+      <div class="task-controls-bar">
+        <div class="filter-group">
+          <div class="select-wrapper">
+            <label>SITE:</label>
+            <select id="selectActiveSiteDropdown" class="custom-select"></select>
+          </div>
+          <div class="select-wrapper">
+            <label>STATUS:</label>
+            <select id="selectStatusFilter" class="custom-select">
+              <option value="ALL">All Status</option>
+              <option value="COMPLETED">100% Completed</option>
+              <option value="IN_PROGRESS">In Progress (>0%)</option>
+              <option value="PENDING">Pending (0%)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="search-refresh-group">
+          <!-- View Switcher (Table vs Gantt Chart) -->
+          <div class="view-toggle-pills">
+            <button class="toggle-pill-btn active" id="btnViewTable" title="List / Table View">
+              <i class="fa-solid fa-table-list"></i> Table View
+            </button>
+            <button class="toggle-pill-btn" id="btnViewGantt" title="Timeline / Gantt Chart View">
+              <i class="fa-solid fa-chart-gantt"></i> Gantt Timeline
+            </button>
+          </div>
+
+          <div class="search-input-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="taskSearchInput" placeholder="Search task, step, WBS, or Doer...">
+          </div>
+          <button class="btn-refresh" id="btnRefreshTasks" title="Refresh">
+            <i class="fa-solid fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Tasks Table Card -->
+      <div class="table-container-card" id="cardTableView">
+        <div class="table-responsive">
+          <table class="tasks-table">
+            <thead>
+              <tr>
+                <th style="width: 120px;">UNIQUE ID</th>
+                <th style="width: 80px;">WBS</th>
+                <th>ACTION / STEP DESCRIPTION</th>
+                <th style="width: 160px;">QTY & PROGRESS</th>
+                <th style="width: 130px;">DOER</th>
+                <th style="width: 110px;">PLAN DATES</th>
+                <th style="width: 180px;">REMARKS</th>
+                <th style="width: 110px;">STATUS</th>
+                <th style="width: 110px; text-align: center;">ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="tasksTableBody">
+              <!-- Dynamically rendered task rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Gantt Chart Interactive Card -->
+      <div class="gantt-container-card" id="cardGanttView" style="display: none;">
+        <div class="gantt-header-toolbar">
+          <div class="gantt-title-wrap">
+            <i class="fa-solid fa-chart-gantt text-primary"></i>
+            <div>
+              <h2 class="gantt-title">Project Schedule & Duration Timeline (Gantt Chart)</h2>
+              <p class="gantt-subtitle">Visual analysis of task duration: Which tasks take the most time vs quick milestones.</p>
+            </div>
+          </div>
+          <div class="gantt-legend">
+            <span class="legend-item"><span class="legend-box lg-completed"></span> Completed (100%)</span>
+            <span class="legend-item"><span class="legend-box lg-inprogress"></span> In Progress</span>
+            <span class="legend-item"><span class="legend-box lg-pending"></span> Pending Scope</span>
+          </div>
+        </div>
+
+        <div class="gantt-body-wrap">
+          <div class="gantt-timeline-container" id="ganttTimelineContainer">
+            <!-- Dynamically populated Gantt bars -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= BOTTOM NAVIGATION DOCK ================= -->
+  <nav class="bottom-dock">
+    <div class="dock-pill">
+      <button class="dock-btn active" id="dockBtnSites" data-target="viewSites">
+        <i class="fa-solid fa-map-pin"></i>
+        <span>Sites</span>
+      </button>
+      <button class="dock-btn" id="dockBtnTasks" data-target="viewTasks">
+        <i class="fa-solid fa-list-check"></i>
+        <span>Tasks</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ================= MODAL 1: UPDATE QUANTITY (DOER) ================= -->
+  <div class="modal-backdrop" id="modalUpdateQty">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="updateModalTaskTitle">Update Task Progress</h3>
+          <span class="modal-subtitle" id="updateModalTaskSub">ID: RDMS00003 | Dinesh Purohit</span>
+        </div>
+        <button class="modal-close-btn" id="btnCloseUpdateModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="scope-info-box">
+          <div class="info-item">
+            <span class="info-lbl">Total Scope Qty:</span>
+            <span class="info-val" id="dispTotalQty">500 Mtr</span>
+          </div>
+          <div class="info-item">
+            <span class="info-lbl">Already Completed:</span>
+            <span class="info-val text-emerald" id="dispCompletedQty">200 Mtr</span>
+          </div>
+          <div class="info-item">
+            <span class="info-lbl">Remaining:</span>
+            <span class="info-val text-amber" id="dispRemainingQty">300 Mtr</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <strong>Update Total Completed Qty:</strong>
+            <span class="text-muted">(Ex: Agar total 5 me se 5 ho gaya to 5 likhein &rarr; 100% complete)</span>
+          </label>
+          <div class="input-with-uom">
+            <input type="number" step="any" min="0" id="inputNewCompletedQty" class="form-control large-input" placeholder="Enter completed qty...">
+            <span class="uom-tag" id="dispUomBadge">Mtr</span>
+          </div>
+        </div>
+
+        <div class="progress-preview-card">
+          <div class="preview-header">
+            <span>Resulting Progress:</span>
+            <span class="preview-pct" id="calcProgressPctText">0%</span>
+          </div>
+          <div class="preview-progress-track">
+            <div class="preview-progress-fill" id="calcProgressFill" style="width: 0%;"></div>
+          </div>
+          <div class="preview-status" id="calcProgressStatus">Pending</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">Assigned Doer / Incharge:</label>
+            <input type="text" id="inputDoerName" class="form-control" placeholder="Doer name">
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">Manpower Used:</label>
+            <input type="text" id="inputManpower" class="form-control" placeholder="e.g. 8 workers">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Work Remarks / Daily Progress Note:</label>
+          <textarea id="inputRemarks" class="form-control" rows="2" placeholder="e.g. Cable laid upto pillar box 2, pending joints..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-light" id="btnCancelUpdateModal">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveTaskProgress">
+          <i class="fa-solid fa-check"></i> Save & Update Progress
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 2: ADD NEW SITE / PROJECT ================= -->
+  <div class="modal-backdrop" id="modalAddSite">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="siteModalHeading">Create New Service Site / Project</h3>
+          <span class="modal-subtitle">Project information & stakeholder details</span>
+        </div>
+        <button class="modal-close-btn" id="btnCloseAddSiteModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Row 1: Project Title & Client -->
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">PROJECT TITLE * :</label>
+            <input type="text" id="newSiteName" class="form-control" placeholder="e.g. RDM Service PMS of 2 MVA Portal Substation" required>
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">CLIENT / COMPANY :</label>
+            <input type="text" id="newSiteClient" class="form-control" placeholder="e.g. MAHESHWARI DISTRIBUTORS">
+          </div>
+        </div>
+
+        <!-- Row 2: PO Number & Data Entry Operator -->
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">PO NUMBER :</label>
+            <input type="text" id="newSitePO" class="form-control" placeholder="e.g. 5100033887">
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">DATA ENTRY OPERATOR :</label>
+            <input type="text" id="newSiteDEO" class="form-control" placeholder="e.g. Mahender Kumar Gurjar">
+          </div>
+        </div>
+
+        <!-- Row 3: Project Start Date & End Date -->
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">PROJECT START DATE :</label>
+            <input type="date" id="newSiteStartDate" class="form-control">
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">PROJECT END DATE :</label>
+            <input type="date" id="newSiteEndDate" class="form-control">
+          </div>
+        </div>
+
+        <!-- Stakeholder Section Divider -->
+        <div style="font-size: 0.75rem; font-weight: 700; color: #4338ca; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-top: 6px;">
+          Key Stakeholders & Contact Info
+        </div>
+
+        <!-- Row 4: Owner & VRE -->
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">OWNER (Name & Mobile) :</label>
+            <input type="text" id="newSiteOwner" class="form-control" placeholder="e.g. DK Shriwal :- 8233330578">
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">VRE (Name & Mobile) :</label>
+            <input type="text" id="newSiteVRE" class="form-control" placeholder="e.g. Aarti Bala :- 8824133320">
+          </div>
+        </div>
+
+        <!-- Row 5: Site Incharge & Process Coordinator -->
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">SITE INCHARGE (Name & Mobile) :</label>
+            <input type="text" id="newSiteIncharge" class="form-control" placeholder="e.g. Dinesh Purohit :- 8003698657">
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">PROCESS COORDINATOR (Name & Mobile) :</label>
+            <input type="text" id="newSiteCoordinator" class="form-control" placeholder="e.g. Tulsi Sen :- 9875789834">
+          </div>
+        </div>
+
+        <!-- Template Selection -->
+        <div class="form-group" id="siteTemplateGroup">
+          <label class="form-label">INITIAL TASK TEMPLATE :</label>
+          <select id="newSiteTemplate" class="form-control">
+            <option value="empty">Start with Empty Site (Add tasks manually)</option>
+            <option value="substation">Copy Standard 2 MVA Substation Service Checklist (101 Tasks)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-light" id="btnCancelAddSiteModal">Cancel</button>
+        <button class="btn btn-primary" id="btnSubmitAddSite">
+          <i class="fa-solid fa-check"></i> <span id="siteModalSubmitBtnText">Create Project</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 3: ADD NEW TASK ================= -->
+  <div class="modal-backdrop" id="modalAddTask">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Add New Service Task</h3>
+          <span class="modal-subtitle" id="addTaskSiteLabel">Adding to current site</span>
+        </div>
+        <button class="modal-close-btn" id="btnCloseAddTaskModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group col-4">
+            <label class="form-label">Task Type:</label>
+            <select id="newTaskType" class="form-control">
+              <option value="task">Actionable Task (with Qty)</option>
+              <option value="header">New Section / Package Header</option>
+            </select>
+          </div>
+          <div class="form-group col-4" id="sectionSelectGroup">
+            <label class="form-label">Add Under Section:</label>
+            <select id="newTaskParentSection" class="form-control">
+              <option value="">(At End of List)</option>
+            </select>
+          </div>
+          <div class="form-group col-4">
+            <label class="form-label">Unique ID *:</label>
+            <input type="text" id="newTaskUID" class="form-control" placeholder="e.g. RDMS00102">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-12">
+            <label class="form-label">WBS Code:</label>
+            <input type="text" id="newTaskWBS" class="form-control" placeholder="e.g. 1.2 or 3 b">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Task Title / Work Description *:</label>
+          <textarea id="newTaskTitle" class="form-control" rows="2" placeholder="e.g. Laying and terminating 11kV 3cx300sqmm Cable..."></textarea>
+        </div>
+
+        <div class="form-row" id="qtyUomSection">
+          <div class="form-group col-4">
+            <label class="form-label">Total Scope Qty:</label>
+            <input type="number" step="any" min="0" id="newTaskTotalQty" class="form-control" placeholder="e.g. 5">
+          </div>
+          <div class="form-group col-4">
+            <label class="form-label">Completed Qty:</label>
+            <input type="number" step="any" min="0" id="newTaskCompletedQty" class="form-control" placeholder="e.g. 0">
+          </div>
+          <div class="form-group col-4">
+            <label class="form-label">UOM (Unit of Measure):</label>
+            <input type="text" id="newTaskUOM" class="form-control" placeholder="e.g. Mtr, Nos, Set, LS">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">Assigned Doer / Work Incharge:</label>
+            <input type="text" id="newTaskDoer" class="form-control" placeholder="e.g. Dinesh Purohit">
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">Duration (Days):</label>
+            <input type="number" min="1" id="newTaskDuration" class="form-control" placeholder="e.g. 15">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">Planned Start Date:</label>
+            <input type="date" id="newTaskStartDate" class="form-control">
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">Planned End Date:</label>
+            <input type="date" id="newTaskEndDate" class="form-control">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-light" id="btnCancelAddTaskModal">Cancel</button>
+        <button class="btn btn-primary" id="btnSubmitAddTask">
+          <i class="fa-solid fa-plus"></i> Add Task
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=5"></script>
+</body>
+</html>
