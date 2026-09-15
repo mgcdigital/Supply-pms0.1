@@ -82,32 +82,64 @@
     <!-- ================= VIEW 2: ACTIVE SITE TASKS ================= -->
     <section id="viewTasks" class="view-section">
       <!-- Active Site Banner -->
-      <!-- Active Site Banner Bar -->
+      <!-- Active Site Banner Bar (Clean, Non-Overflowing) -->
       <div class="site-banner-bar">
         <div class="site-banner-left">
           <span class="pin-icon-white"><i class="fa-solid fa-map-pin"></i></span>
           <span class="banner-label">Active Project:</span>
-          <span class="banner-site-name" id="currentSiteTitle">Site Name</span>
+          <span class="banner-site-name" id="currentSiteTitle" title="Click to edit project details">Site Name</span>
           <span class="banner-site-badge" id="currentSiteProgressBadge">
             <i class="fa-solid fa-circle-check"></i> <span id="currentSiteProgressText">0% Complete</span>
           </span>
         </div>
+
         <div class="site-banner-actions">
-          <button class="btn btn-emerald" id="btnOpenAddTaskModal" title="Add a single task">
+          <!-- Primary Action Button: Add Task -->
+          <button class="btn btn-emerald" id="btnOpenAddTaskModal" title="Add single new task">
             <i class="fa-solid fa-plus"></i> Add Task
           </button>
-          <button class="btn btn-emerald-secondary" id="btnOpenBulkAddTasksModal" title="Add multiple tasks at once via paste or Excel import">
-            <i class="fa-solid fa-layer-group"></i> Bulk Add Tasks
-          </button>
-          <button class="btn btn-glass" id="btnEditCurrentSiteMeta" title="Edit project metadata & stakeholders">
-            <i class="fa-solid fa-pen-to-square"></i> Project Details
-          </button>
-          <button class="btn btn-glass" id="btnExportCurrentSiteExcel" title="Download Excel workbook with tasks">
-            <i class="fa-solid fa-file-excel"></i> Export Excel
-          </button>
-          <button class="btn btn-glass btn-sheets-sync" id="btnOpenSheetsConfigModal" title="Configure live Google Sheets auto-sync webhook">
-            <i class="fa-solid fa-file-waveform text-emerald-300"></i> Sheets Sync <span class="sync-indicator-dot" id="sheetsSyncDot"></span>
-          </button>
+
+          <!-- Single Actions Dropdown (Clean, Professional & No Overflow) -->
+          <div class="actions-dropdown-wrap" id="actionsDropdownWrap">
+            <button class="btn btn-actions-dropdown" id="actionsBtn" type="button" aria-haspopup="true" aria-expanded="false">
+              <i class="fa-solid fa-sliders"></i>
+              <span>Actions</span>
+              <i class="fa-solid fa-chevron-down dropdown-arrow-icon"></i>
+            </button>
+            <div class="actions-dropdown-menu" id="actionsMenu">
+              <a href="#" class="dropdown-item" id="menuItemBulkAdd">
+                <i class="fa-solid fa-table-list text-emerald"></i>
+                <div>
+                  <div class="item-title">Bulk Add Tasks</div>
+                  <div class="item-sub">Copy-paste from Sheets or Excel</div>
+                </div>
+              </a>
+              <a href="#" class="dropdown-item" id="menuItemProjectDetails">
+                <i class="fa-solid fa-pen-to-square text-primary"></i>
+                <div>
+                  <div class="item-title">Project Details</div>
+                  <div class="item-sub">Edit dates, client, PO & stakeholders</div>
+                </div>
+              </a>
+              <a href="#" class="dropdown-item" id="menuItemExportExcel">
+                <i class="fa-solid fa-file-excel text-emerald-dark"></i>
+                <div>
+                  <div class="item-title">Export Excel</div>
+                  <div class="item-sub">Download updated .xlsx sheet</div>
+                </div>
+              </a>
+              <div class="dropdown-divider"></div>
+              <a href="#" class="dropdown-item" id="menuItemSheetsSync">
+                <i class="fa-solid fa-file-waveform text-amber"></i>
+                <div>
+                  <div class="item-title">Google Sheets Sync <span class="sync-indicator-dot" id="sheetsSyncDot"></span></div>
+                  <div class="item-sub">Real-time DB Webhook settings</div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Quick Return Button -->
           <button class="btn btn-glass" id="btnBackToSites" title="Return to directory">
             <i class="fa-solid fa-arrow-left"></i> Back
           </button>

@@ -2,19 +2,85 @@
 
 // Local storage key
 const STORAGE_KEY = 'SERVICE_PMS_DATA_V5';
+const ROLE_STORAGE_KEY = 'SERVICE_PMS_USER_ROLE';
 
 // Initial state
 let sitesData = [];
 let activeSiteId = null;
 let currentEditingTaskId = null;
+let currentUserRole = localStorage.getItem(ROLE_STORAGE_KEY) || 'Super Admin';
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData();
+  setupRoleBadges();
   setupEventListeners();
   renderSites();
   populateSiteDropdown();
 });
+
+function setupRoleBadges() {
+  const adminBadge = document.querySelector('.role-badge.admin');
+  const superAdminBadge = document.querySelector('.role-badge.super-admin');
+
+  function updateRoleUI() {
+    if (adminBadge) adminBadge.classList.toggle('active', currentUserRole === 'Admin');
+    if (superAdminBadge) superAdminBadge.classList.toggle('active', currentUserRole === 'Super Admin');
+  }
+
+  updateRoleUI();
+
+  if (adminBadge) {
+    adminBadge.addEventListener('click', () => {
+      currentUserRole = 'Admin';
+      localStorage.setItem(ROLE_STORAGE_KEY, currentUserRole);
+      updateRoleUI();
+      if (activeSiteId) renderSiteTasks();
+    });
+  }
+
+  if (superAdminBadge) {
+    superAdminBadge.addEventListener('click', () => {
+      currentUserRole = 'Super Admin';
+      localStorage.setItem(ROLE_STORAGE_KEY, currentUserRole);
+      updateRoleUI();
+      if (activeSiteId) renderSiteTasks();
+    });
+  }
+}
+
+// Delete task (Super Admin only)
+function deleteTask(taskId) {
+  if (currentUserRole !== 'Super Admin') {
+    alert('Access Denied: Only Super Admin can delete tasks.');
+    return;
+  }
+
+  const site = sitesData.find(s => s.id === activeSiteId);
+  if (!site) return;
+
+  const taskIdx = site.tasks.findIndex(t => t.id === taskId);
+  if (taskIdx === -1) return;
+
+  const task = site.tasks[taskIdx];
+  if (confirm(`Are you sure you want to delete task "${task.title}"?`)) {
+    site.tasks.splice(taskIdx, 1);
+    saveData();
+    renderSiteTasks();
+
+    // Sheets log
+    sendGoogleSheetsLog({
+      uniqueId: task.id,
+      projectName: site.name,
+      action: `Task Deleted: ${task.title}`,
+      poNumber: site.poNumber || '',
+      client: site.client || '',
+      stakeholders: `${site.owner || ''}, ${site.siteIncharge || ''}`,
+      status: 'Deleted',
+      updatedBy: 'Super Admin'
+    });
+  }
+}
 
 // Load Data from LocalStorage or seed_data.json
 async function loadData() {
@@ -507,9 +573,7 @@ function renderSiteTasks() {
       <td>${remarksText}</td>
       <td>${statusBadge}</td>
       <td style="text-align: center;">
-        <button class="btn-table-update" onclick="openUpdateModal('${task.id}')">
-          <i class="fa-solid fa-pen-to-square"></i> Update
-        </button>
+        ${renderTaskActionColumn(task)}
       </td>
     `;
     tbody.appendChild(tr);
@@ -517,6 +581,25 @@ function renderSiteTasks() {
 
   // Also render Gantt timeline with current filter
   renderGanttTimeline(filteredTasks);
+}
+
+// Render Action column based on user role (Super Admin vs Admin/Normal User)
+function renderTaskActionColumn(task) {
+  if (currentUserRole === 'Super Admin') {
+    return `
+      <div class="action-buttons-cell">
+        <button class="btn-table-update" onclick="openUpdateModal('${task.id}')" title="Update progress">
+          <i class="fa-solid fa-pen-to-square"></i> Update
+        </button>
+        <button class="btn-table-del" onclick="deleteTask('${task.id}')" title="Delete task">
+          <i class="fa-solid fa-trash-can"></i> Delete
+        </button>
+      </div>
+    `;
+  } else {
+    // Normal User / Admin: View Only
+    return `<span class="view-only-badge"><i class="fa-solid fa-lock"></i> View Only</span>`;
+  }
 }
 
 // ================= RENDER GANTT TIMELINE =================
@@ -1221,6 +1304,59 @@ function setupEventListeners() {
   if (btnSaveSheets) btnSaveSheets.addEventListener('click', saveSheetsConfig);
   const btnTestSheets = document.getElementById('btnTestSheetsSync');
   if (btnTestSheets) btnTestSheets.addEventListener('click', testGoogleSheetsSync);
+
+  // Actions Dropdown Toggle & Items
+  const actionsWrap = document.getElementById('actionsDropdownWrap');
+  const actionsBtn = document.getElementById('actionsBtn');
+  if (actionsBtn && actionsWrap) {
+    actionsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionsWrap.classList.toggle('open');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!actionsWrap.contains(e.target)) {
+        actionsWrap.classList.remove('open');
+      }
+    });
+  }
+
+  // Dropdown Items actions
+  const itemBulkAdd = document.getElementById('menuItemBulkAdd');
+  if (itemBulkAdd) {
+    itemBulkAdd.addEventListener('click', (e) => {
+      e.preventDefault();
+      actionsWrap.classList.remove('open');
+      openBulkAddTasksModal();
+    });
+  }
+
+  const itemProjectDetails = document.getElementById('menuItemProjectDetails');
+  if (itemProjectDetails) {
+    itemProjectDetails.addEventListener('click', (e) => {
+      e.preventDefault();
+      actionsWrap.classList.remove('open');
+      if (activeSiteId) editSite(activeSiteId);
+    });
+  }
+
+  const itemExportExcel = document.getElementById('menuItemExportExcel');
+  if (itemExportExcel) {
+    itemExportExcel.addEventListener('click', (e) => {
+      e.preventDefault();
+      actionsWrap.classList.remove('open');
+      exportSiteToExcel();
+    });
+  }
+
+  const itemSheetsSync = document.getElementById('menuItemSheetsSync');
+  if (itemSheetsSync) {
+    itemSheetsSync.addEventListener('click', (e) => {
+      e.preventDefault();
+      actionsWrap.classList.remove('open');
+      openSheetsConfigModal();
+    });
+  }
 
   // Initialize Sheets sync indicator
   updateSheetsIndicator();

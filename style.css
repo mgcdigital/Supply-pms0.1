@@ -468,6 +468,9 @@ body {
 
 /* ================= ACTIVE SITE VIEW ================= */
 .site-banner-bar {
+  position: sticky;
+  top: 57px; /* Below sticky top-nav */
+  z-index: 85;
   background: linear-gradient(135deg, #581c87 0%, #6b21a8 50%, #5b21b6 100%);
   color: white;
   padding: 10px 20px;
@@ -583,6 +586,155 @@ body {
   background: rgba(255, 255, 255, 0.22) !important;
   border-color: rgba(255, 255, 255, 0.4) !important;
   transform: translateY(-1px);
+}
+
+/* Sticky Active Site Banner & Top Header */
+.sticky-top-header {
+  position: sticky;
+  top: 60px; /* Right beneath the top-nav bar */
+  z-index: 90;
+  background: var(--bg-main);
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/* Actions Dropdown Component */
+.actions-dropdown-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.btn-actions-dropdown {
+  background: #ffffff !important;
+  color: #581c87 !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  padding: 7px 15px !important;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-actions-dropdown:hover {
+  background: #fdf4ff !important;
+  color: #4a044e !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-arrow-icon {
+  font-size: 0.72rem;
+  transition: transform 0.2s ease;
+}
+
+.actions-dropdown-wrap.open .dropdown-arrow-icon {
+  transform: rotate(180deg);
+}
+
+.actions-dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 250px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+  padding: 6px;
+  z-index: 200;
+  animation: modalSlideIn 0.15s ease-out;
+}
+
+.actions-dropdown-wrap.open .actions-dropdown-menu {
+  display: block;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.dropdown-item i {
+  font-size: 1rem;
+  width: 18px;
+  text-align: center;
+}
+
+.dropdown-item .item-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.dropdown-item .item-sub {
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 4px 0;
+}
+
+.text-emerald-dark {
+  color: #047857;
+}
+
+/* Super Admin Action Buttons in Table */
+.action-buttons-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-table-del {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 5px 9px;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.18s ease;
+}
+
+.btn-table-del:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.view-only-badge {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  font-style: italic;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Google Sheets Sync button with glowing dot */
