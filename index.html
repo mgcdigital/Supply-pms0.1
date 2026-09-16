@@ -688,7 +688,7 @@
           <h3 class="modal-title">Bulk Add / Import Service Tasks</h3>
           <p class="modal-subtitle" id="bulkAddSiteLabel">Ek sath multiple tasks Excel/Sheets se copy-paste karein ya fast table me type karein</p>
         </div>
-        <button class="modal-close-btn" id="btnCloseBulkAddModal" title="Close dialog">
+        <button class="modal-close-btn" id="btnCloseBulkAddModal" type="button" onclick="closeBulkAddTasksModal()" title="Close dialog">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -756,7 +756,7 @@ Example:
           </div>
 
           <div class="paste-action-bar">
-            <button class="btn btn-emerald" id="btnParsePastedRows">
+            <button class="btn btn-emerald" id="btnParsePastedRows" type="button" onclick="parsePastedRows()">
               <i class="fa-solid fa-arrows-rotate"></i> Parse & Preview Rows
             </button>
             <span class="preview-count-badge" id="parsedCountBadge" style="display:none;">0 rows detected</span>
@@ -829,7 +829,7 @@ Example:
 
       <div class="modal-footer">
         <button class="btn btn-secondary-outline" id="btnCancelBulkAddModal">Cancel</button>
-        <button class="btn btn-primary" id="btnSubmitBulkTasks">
+        <button class="btn btn-primary" id="btnSubmitBulkTasks" type="button" onclick="submitBulkTasks()">
           <i class="fa-solid fa-cloud-arrow-up"></i> <span id="btnSubmitBulkText">Add All Tasks to Site</span>
         </button>
       </div>

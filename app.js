@@ -2628,3 +2628,15 @@ function showBulkDeleteToast(count) {
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
+
+
+// Global window attachments for guaranteed HTML onclick access
+window.parsePastedRows = parsePastedRows;
+window.submitBulkTasks = submitBulkTasks;
+window.closeBulkAddTasksModal = closeBulkAddTasksModal;
+window.openBulkAddTasksModal = openBulkAddTasksModal;
+window.switchBulkTab = switchBulkTab;
+window.openEditTaskModal = openEditTaskModal;
+window.closeEditTaskModal = closeEditTaskModal;
+window.openUpdateModal = openUpdateModal;
+window.closeUpdateModal = closeUpdateModal;
