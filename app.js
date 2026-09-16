@@ -680,10 +680,10 @@ function renderSiteTasks() {
     const tr = document.createElement('tr');
 
     // If it's a section header row (e.g. WBS Category)
-    if (task.isHeader) {
+        if (task.isHeader) {
       tr.className = 'header-row';
-      // Section header: Edit for both roles; Delete via Bulk Delete checkboxes
-      const sectionActionHtml = <div class="action-buttons-cell"><button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit Section"><i class="fa-solid fa-pen"></i></button></div>;
+      const sectionActionHtml = `<div class="action-buttons-cell"><button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit Section"><i class="fa-solid fa-pen"></i></button></div>`;
+      tr.innerHTML = `
         ${currentUserRole === 'Super Admin' ? `<td class="td-checkbox"><input type="checkbox" class="row-checkbox" data-id="${task.id}" onchange="onRowCheckboxChange(this)"></td>` : ''}
         <td class="uid-cell">
           <i class="fa-solid fa-folder-open text-primary"></i> ${task.id}
