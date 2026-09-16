@@ -637,6 +637,15 @@ function renderSiteTasks() {
   const tbody = document.getElementById('tasksTableBody');
   tbody.innerHTML = '';
 
+  // Bulk Delete bar: Super Admin only
+  const bulkBar = document.getElementById('bulkActionBar');
+  const thCheckbox = document.getElementById('thCheckboxCol');
+  if (bulkBar) bulkBar.style.display = currentUserRole === 'Super Admin' ? '' : 'none';
+  if (thCheckbox) thCheckbox.style.display = currentUserRole === 'Super Admin' ? '' : 'none';
+  // Reset selection state on every re-render
+  selectedTaskIds.clear();
+  updateBulkActionBar();
+
   const filterStatus = document.getElementById('selectStatusFilter').value;
   const searchQuery = document.getElementById('taskSearchInput').value.trim().toLowerCase();
 
@@ -673,21 +682,9 @@ function renderSiteTasks() {
     // If it's a section header row (e.g. WBS Category)
     if (task.isHeader) {
       tr.className = 'header-row';
-      const sectionActionHtml = currentUserRole === 'Super Admin'
-        ? `<div class="action-buttons-cell">
-            <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit Section">
-              <i class="fa-solid fa-pen"></i>
-            </button>
-            <button class="btn-icon-del" onclick="deleteSection('${task.id}')" title="Delete Section">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </div>`
-        : `<div class="action-buttons-cell">
-            <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit Section">
-              <i class="fa-solid fa-pen"></i>
-            </button>
-          </div>`;
-      tr.innerHTML = `
+      // Section header: Edit for both roles; Delete via Bulk Delete checkboxes
+      const sectionActionHtml = <div class="action-buttons-cell"><button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit Section"><i class="fa-solid fa-pen"></i></button></div>;
+        ${currentUserRole === 'Super Admin' ? `<td class="td-checkbox"><input type="checkbox" class="row-checkbox" data-id="${task.id}" onchange="onRowCheckboxChange(this)"></td>` : ''}
         <td class="uid-cell">
           <i class="fa-solid fa-folder-open text-primary"></i> ${task.id}
         </td>
@@ -740,6 +737,7 @@ function renderSiteTasks() {
       : `<span style="color: #cbd5e1;">-</span>`;
 
     tr.innerHTML = `
+        ${currentUserRole === 'Super Admin' ? `<td class="td-checkbox"><input type="checkbox" class="row-checkbox" data-id="${task.id}" onchange="onRowCheckboxChange(this)"></td>` : ''}
       <td class="uid-cell">
         <i class="fa-solid fa-play uid-arrow"></i> ${task.id}
       </td>
@@ -768,33 +766,18 @@ function renderSiteTasks() {
 
 // Render Action column based on user role (Super Admin vs Admin/Normal User)
 function renderTaskActionColumn(task) {
-  if (currentUserRole === 'Super Admin') {
-    return `
-      <div class="action-buttons-cell">
-        <button class="btn-icon-done" onclick="openUpdateModal('${task.id}')" title="Mark as Done / Update Progress">
-          <i class="fa-solid fa-circle-check"></i>
-        </button>
-        <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit task details">
-          <i class="fa-solid fa-pen"></i>
-        </button>
-        <button class="btn-icon-del" onclick="deleteTask('${task.id}')" title="Delete task">
-          <i class="fa-solid fa-trash-can"></i>
-        </button>
-      </div>
-    `;
-  } else {
-    // Admin: Can mark done & edit, but cannot delete
-    return `
-      <div class="action-buttons-cell">
-        <button class="btn-icon-done" onclick="openUpdateModal('${task.id}')" title="Mark as Done / Update Progress">
-          <i class="fa-solid fa-circle-check"></i>
-        </button>
-        <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit task details">
-          <i class="fa-solid fa-pen"></i>
-        </button>
-      </div>
-    `;
-  }
+  // Both Super Admin and Admin get: Mark Done + Edit
+  // Delete is handled via Bulk Delete only (Super Admin only, via checkboxes)
+  return `
+    <div class="action-buttons-cell">
+      <button class="btn-icon-done" onclick="openUpdateModal('${task.id}')" title="Mark as Done / Update Progress">
+        <i class="fa-solid fa-circle-check"></i>
+      </button>
+      <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit task details">
+        <i class="fa-solid fa-pen"></i>
+      </button>
+    </div>
+  `;
 }
 
 // ================= DELETE SECTION =================
@@ -2365,4 +2348,152 @@ function importBackup(event) {
     }
   };
   reader.readAsText(file);
+}
+
+// =====================================================
+// BULK TASK DELETE — SUPER ADMIN ONLY
+// =====================================================
+
+// Track selected task IDs
+const selectedTaskIds = new Set();
+
+/** Called when any row checkbox changes */
+function onRowCheckboxChange(chk) {
+  const taskId = chk.dataset.id;
+  if (chk.checked) {
+    selectedTaskIds.add(taskId);
+  } else {
+    selectedTaskIds.delete(taskId);
+  }
+  updateBulkActionBar();
+  syncSelectAllCheckbox();
+}
+
+/** Select All / Deselect All */
+function toggleSelectAll(checked) {
+  const checkboxes = document.querySelectorAll('#tasksTableBody .row-checkbox');
+  checkboxes.forEach(chk => {
+    chk.checked = checked;
+    if (checked) {
+      selectedTaskIds.add(chk.dataset.id);
+    } else {
+      selectedTaskIds.delete(chk.dataset.id);
+    }
+  });
+  updateBulkActionBar();
+}
+
+/** Keep Select All checkbox in sync */
+function syncSelectAllCheckbox() {
+  const selectAll = document.getElementById('chkSelectAll');
+  if (!selectAll) return;
+  const all = document.querySelectorAll('#tasksTableBody .row-checkbox');
+  const checked = document.querySelectorAll('#tasksTableBody .row-checkbox:checked');
+  if (all.length === 0) {
+    selectAll.indeterminate = false;
+    selectAll.checked = false;
+  } else if (checked.length === all.length) {
+    selectAll.indeterminate = false;
+    selectAll.checked = true;
+  } else if (checked.length === 0) {
+    selectAll.indeterminate = false;
+    selectAll.checked = false;
+  } else {
+    selectAll.indeterminate = true;
+  }
+}
+
+/** Update the bulk action bar count and button state */
+function updateBulkActionBar() {
+  const countEl = document.getElementById('bulkSelectedCount');
+  const btn = document.getElementById('btnDeleteSelected');
+  const count = selectedTaskIds.size;
+  if (countEl) countEl.textContent = count;
+  if (btn) {
+    btn.disabled = count === 0;
+    btn.classList.toggle('active', count > 0);
+  }
+}
+
+/** Bulk delete confirmation and execution */
+function bulkDeleteSelected() {
+  if (currentUserRole !== 'Super Admin') {
+    alert('Access Denied: Only Super Admin can bulk delete tasks.');
+    return;
+  }
+
+  const site = sitesData.find(s => s.id === activeSiteId);
+  if (!site) return;
+
+  const count = selectedTaskIds.size;
+  if (count === 0) return;
+
+  // Build list of selected tasks
+  const selectedTasks = site.tasks.filter(t => selectedTaskIds.has(t.id));
+  const selectedHeaders = selectedTasks.filter(t => t.isHeader);
+
+  // Safety check: warn if a WBS/header is selected while some of its children are NOT selected
+  let safetyWarnings = [];
+  selectedHeaders.forEach(header => {
+    // Find children: tasks that are NOT headers and appear after this header before next header
+    const headerIdx = site.tasks.findIndex(t => t.id === header.id);
+    let childTasks = [];
+    for (let i = headerIdx + 1; i < site.tasks.length; i++) {
+      if (site.tasks[i].isHeader) break;
+      childTasks.push(site.tasks[i]);
+    }
+    const unselectedChildren = childTasks.filter(c => !selectedTaskIds.has(c.id));
+    if (unselectedChildren.length > 0) {
+      safetyWarnings.push(
+        `WBS "${header.wbs || header.title}" has ${unselectedChildren.length} unselected child task(s) that will remain.`
+      );
+    }
+  });
+
+  // Build confirmation message
+  let confirmMsg = `Are you sure you want to delete ${count} selected task${count > 1 ? 's' : ''}?\nThis action cannot be undone.`;
+  if (safetyWarnings.length > 0) {
+    confirmMsg += '\n\n⚠️ Safety Warning:\n' + safetyWarnings.join('\n') + '\n\nOnly explicitly selected rows will be deleted. Unselected child tasks will remain unchanged.';
+  }
+
+  if (!confirm(confirmMsg)) return;
+
+  // Perform deletion — only explicitly selected IDs
+  const idsToDelete = new Set(selectedTaskIds);
+  site.tasks = site.tasks.filter(t => !idsToDelete.has(t.id));
+
+  // Reset selection
+  selectedTaskIds.clear();
+
+  saveData();
+  renderSiteTasks();
+
+  // Log to Sheets
+  sendGoogleSheetsLog({
+    uniqueId: `PMS-BULK-DEL-${count}`,
+    projectName: site.name,
+    action: `Bulk Deleted ${count} Task(s)`,
+    poNumber: site.poNumber || '',
+    client: site.client || '',
+    stakeholders: `${site.owner || ''}, ${site.siteIncharge || ''}`,
+    status: 'Deleted',
+    updatedBy: 'Super Admin'
+  });
+
+  // Show a brief success toast in page
+  showBulkDeleteToast(count);
+}
+
+/** Minimal non-blocking toast for bulk delete success */
+function showBulkDeleteToast(count) {
+  let toast = document.getElementById('bulkDeleteToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'bulkDeleteToast';
+    toast.className = 'bulk-delete-toast';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<i class="fa-solid fa-trash-can"></i> ${count} task${count > 1 ? 's' : ''} deleted successfully.`;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
 }

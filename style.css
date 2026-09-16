@@ -2380,3 +2380,147 @@ body {
   font-weight: 400;
   margin-top: 2px;
 }
+/* =====================================================
+   BULK TASK DELETE — SUPER ADMIN ONLY
+   ===================================================== */
+
+/* Bulk Action Bar */
+.bulk-action-bar {
+  background: linear-gradient(135deg, #fff1f2, #fef2f2);
+  border: 1.5px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  animation: slideDownFade 0.25s ease;
+}
+
+@keyframes slideDownFade {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.bulk-action-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Select All label */
+.bulk-select-all-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  user-select: none;
+}
+.bulk-select-all-label input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: #dc2626;
+  cursor: pointer;
+}
+
+.bulk-divider {
+  width: 1px;
+  height: 22px;
+  background: #fca5a5;
+}
+
+.bulk-count-label {
+  font-size: 0.82rem;
+  color: #991b1b;
+  font-weight: 600;
+  background: #fee2e2;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #fca5a5;
+}
+
+/* Delete Selected button */
+.btn-bulk-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #f3f4f6;
+  color: #9ca3af;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: not-allowed;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+.btn-bulk-delete.active {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(220, 38, 38, 0.3);
+}
+.btn-bulk-delete.active:hover {
+  background: #b91c1c;
+  box-shadow: 0 5px 15px rgba(185, 28, 28, 0.4);
+  transform: translateY(-1px);
+}
+.btn-bulk-delete.active:active {
+  transform: translateY(0);
+}
+
+/* Row checkbox column */
+.th-checkbox {
+  text-align: center;
+  padding: 8px 4px !important;
+}
+.td-checkbox {
+  text-align: center;
+  padding: 0 4px;
+  vertical-align: middle;
+}
+.row-checkbox {
+  width: 14px;
+  height: 14px;
+  accent-color: #dc2626;
+  cursor: pointer;
+}
+
+/* Row highlight when checked */
+#tasksTableBody tr:has(.row-checkbox:checked) {
+  background: #fff5f5 !important;
+  outline: 1.5px solid #fca5a5;
+  outline-offset: -1px;
+}
+
+/* Bulk delete success toast */
+.bulk-delete-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: #1e293b;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  opacity: 0;
+  transform: translateY(16px);
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  z-index: 9999;
+  pointer-events: none;
+}
+.bulk-delete-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.bulk-delete-toast i {
+  color: #f87171;
+}

@@ -257,12 +257,28 @@
         </div>
       </div>
 
+      <!-- Bulk Delete Action Bar (Super Admin Only) -->
+      <div class="bulk-action-bar" id="bulkActionBar" style="display:none;">
+        <div class="bulk-action-inner">
+          <label class="bulk-select-all-label" title="Select All visible rows">
+            <input type="checkbox" id="chkSelectAll" onchange="toggleSelectAll(this.checked)">
+            <span>Select All</span>
+          </label>
+          <div class="bulk-divider"></div>
+          <span class="bulk-count-label"><span id="bulkSelectedCount">0</span> Tasks Selected</span>
+          <button class="btn-bulk-delete" id="btnDeleteSelected" onclick="bulkDeleteSelected()" disabled>
+            <i class="fa-solid fa-trash-can"></i> Delete Selected
+          </button>
+        </div>
+      </div>
+
       <!-- Tasks Table Card -->
       <div class="table-container-card" id="cardTableView">
         <div class="table-responsive">
           <table class="tasks-table">
             <thead>
               <tr>
+                <th class="th-checkbox" id="thCheckboxCol" style="width: 36px; display: none;"></th>
                 <th style="width: 120px;">UNIQUE ID</th>
                 <th style="width: 80px;">WBS</th>
                 <th>ACTION / STEP DESCRIPTION</th>
