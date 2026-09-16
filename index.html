@@ -585,8 +585,9 @@
     const todayDate = new Date().toISOString().slice(0, 10);
     document.getElementById('mStartDate').value = todayDate;
 
-    const API_BASE = window.location.origin.startsWith('file:') 
-      ? 'https://pms-central-kini.onrender.com' 
+    // Always connect to the live backend when running on github.io or file protocol
+    const API_BASE = (window.location.hostname.includes('github.io') || window.location.protocol.startsWith('file:'))
+      ? 'https://pms-central-kini.onrender.com'
       : '';
 
     function naturalWbsSort(a, b) {
