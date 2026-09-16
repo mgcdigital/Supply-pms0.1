@@ -1995,7 +1995,7 @@ function parsePastedRows() {
   try {
     const textEl = document.getElementById('bulkPasteInput');
     if (!textEl) {
-      alert('Error: Paste input not found');
+      alert('Error: Paste input area not found');
       return;
     }
     const text = textEl.value.trim();
@@ -2013,33 +2013,35 @@ function parsePastedRows() {
     const defaultQty = defaultQtyEl ? (parseFloat(defaultQtyEl.value) || 1) : 1;
     const defaultUOM = (defaultUOMEl ? defaultUOMEl.value.trim() : '') || 'LS';
 
-    const lines = text.split(/\r?\n/);
+    const rawLines = text.split(/\r?\n/);
     const parsed = [];
     let currentNum = site && site.tasks ? site.tasks.length + 1 : 1;
 
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-      const raw = lines[lineIndex].trim();
-      if (!raw) continue;
+    for (let i = 0; i < rawLines.length; i++) {
+      const line = rawLines[i].trim();
+      if (!line) continue;
 
-      let cols = [];
-      if (raw.includes('\t')) {
-        cols = raw.split('\t');
-      } else if (raw.includes('|')) {
-        cols = raw.split('|');
-      } else if (raw.includes(',')) {
-        cols = raw.split(',');
+      // Detect separator: Tab, Pipe, 2+ consecutive spaces (Excel text paste), or Comma
+      let tokens = [];
+      if (line.includes('\t')) {
+        tokens = line.split('\t');
+      } else if (line.includes('|')) {
+        tokens = line.split('|');
+      } else if (/\s{2,}/.test(line)) {
+        tokens = line.split(/\s{2,}/);
+      } else if (line.includes(',')) {
+        tokens = line.split(',');
       } else {
-        cols = [raw];
+        tokens = [line];
       }
-      cols = cols.map(c => (c || '').trim());
+      tokens = tokens.map(t => (t || '').trim()).filter(t => t.length > 0);
+      if (tokens.length === 0) continue;
 
-      // Skip header lines
-      const c0 = (cols[0] || '').toLowerCase();
-      const c1 = (cols[1] || '').toLowerCase();
-      if (c0.includes('wbs') || c0.includes('s.no') || c0.includes('serial') ||
-          c1.includes('task title') || c1.includes('description') || c0.includes('company name')) {
-        continue;
-      }
+      // Skip header rows
+      const lowerLine = line.toLowerCase();
+      if (lowerLine.includes('task title') && lowerLine.includes('date')) continue;
+      if (lowerLine.includes('wbs') && lowerLine.includes('description')) continue;
+      if (lowerLine.startsWith('company name') || lowerLine.startsWith('project title')) continue;
 
       let wbs = '';
       let title = '';
@@ -2051,65 +2053,79 @@ function parsePastedRows() {
       let qty = defaultQty;
       let uom = defaultUOM;
 
-      if (cols.length === 1) {
-        title = cols[0];
-      } else if (cols.length === 2) {
-        wbs = cols[0];
-        title = cols[1];
-      } else {
-        wbs = cols[0];
-        title = cols[1];
+      // Extract all dates present anywhere in the line
+      const datesFound = [];
+      // Also look for inline dates in the line like DD/MM/YYYY or DD-MM-YYYY
+      const dateRegex = /\b(\d{1,2}[-/.]\d{1,2}[-/.]\d{4}|\d{4}[-/.]\d{1,2}[-/.]\d{1,2})\b/g;
+      let dateMatch;
+      while ((dateMatch = dateRegex.exec(line)) !== null) {
+        const parsedD = parseAnyDate(dateMatch[1]);
+        if (parsedD && !datesFound.includes(parsedD)) {
+          datesFound.push(parsedD);
+        }
+      }
+      if (datesFound.length >= 1) startDate = datesFound[0];
+      if (datesFound.length >= 2) endDate = datesFound[1];
 
-        // Column 2: Doer or Date
-        if (cols[2]) {
-          const possibleDate = parseAnyDate(cols[2]);
-          if (possibleDate) {
-            startDate = possibleDate;
-          } else if (/[a-zA-Z]/.test(cols[2])) {
-            doer = cols[2];
+      // If token 0 is numeric or short like "1", "1.0", "A1", treat as WBS
+      let titleIndex = 0;
+      if (tokens.length > 1 && /^([0-9]+(\.[0-9]+)*|[a-zA-Z][0-9]*)$/.test(tokens[0])) {
+        wbs = tokens[0];
+        titleIndex = 1;
+      }
+
+      // Title is the main text token
+      title = tokens[titleIndex] || tokens[0];
+
+      // Remove date tokens from tokens to find doer & manpower
+      for (let j = titleIndex + 1; j < tokens.length; j++) {
+        const tok = tokens[j];
+        if (parseAnyDate(tok)) continue; // Date already collected
+
+        // Check if numeric (duration or manpower)
+        if (!isNaN(tok)) {
+          const numVal = parseInt(tok, 10);
+          if (numVal <= 100 && manpower === '6' && j === titleIndex + 1) {
+            manpower = String(numVal);
+          } else if (numVal > 0 && numVal <= 500) {
+            duration = numVal;
+          }
+        } else if (/[a-zA-Z]/.test(tok) && doer === defaultDoer) {
+          // If token looks like a person's name (e.g. Indra Dev, Dinesh Purohit, Ashish)
+          if (!tok.includes('/') && !tok.includes('-') && tok.length < 35) {
+            doer = tok;
           }
         }
+      }
 
-        // Column 3: Manpower or Date
-        if (cols[3]) {
-          const possibleDate = parseAnyDate(cols[3]);
-          if (possibleDate) {
-            if (!startDate) startDate = possibleDate;
-            else if (!endDate) endDate = possibleDate;
-          } else if (!isNaN(cols[3])) {
-            manpower = String(cols[3]);
-          }
+      // If title accidentally captured the doer at the end (e.g. "...in system Indra Dev")
+      const commonNames = ['Indra Dev', 'Gopal Choubisa', 'Ashish', 'Dinesh Purohit', 'Ramesh Patel', 'Tulsi Sen', 'Ashok Menariya', 'Mahender Kumar'];
+      for (const name of commonNames) {
+        if (title.endsWith(name)) {
+          title = title.substring(0, title.length - name.length).trim();
+          doer = name;
+          break;
         }
+      }
 
-        // Remaining columns: Look for dates and duration
-        for (let i = 4; i < cols.length; i++) {
-          const val = cols[i];
-          if (!val) continue;
+      // If duration is missing but we have start and end date, calculate duration
+      if (startDate && endDate) {
+        try {
+          const d1 = new Date(startDate);
+          const d2 = new Date(endDate);
+          const diffDays = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+          if (diffDays > 0) duration = diffDays;
+        } catch(e) {}
+      }
 
-          const dateMatch = parseAnyDate(val);
-          if (dateMatch) {
-            if (!startDate) {
-              startDate = dateMatch;
-            } else if (!endDate) {
-              endDate = dateMatch;
-            }
-            continue;
-          }
-
-          if (!isNaN(val) && Number(val) > 0 && Number(val) <= 1000 && duration === 7) {
-            duration = parseInt(val, 10);
-          }
-        }
+      // Check if title has Qty hint like (Scope of work) or (-4000 M3)
+      const qtyMatch = title.match(/[- (](\d+(?:\.\d+)?)\s*(M3|MTR|NOS|LS|KG|MT|SET|RMT)\b/i);
+      if (qtyMatch) {
+        qty = parseFloat(qtyMatch[1]);
+        uom = qtyMatch[2].toUpperCase();
       }
 
       if (!title) continue;
-
-      // Extract qty hint from title if present like (6000 MTR)
-      const qtyMatch = title.match(/\((\d+(?:\.\d+)?)\s*([a-zA-Z]+)\)/i);
-      if (qtyMatch) {
-        qty = parseFloat(qtyMatch[1]);
-        uom = qtyMatch[2];
-      }
 
       parsed.push({
         id: `PMS${String(currentNum++).padStart(5, '0')}`,
@@ -2138,12 +2154,18 @@ function parsePastedRows() {
       countBadge.style.display = 'inline-block';
     }
 
+    // Scroll to preview smoothly
+    const previewContainer = document.getElementById('bulkPreviewContainer');
+    if (previewContainer && parsed.length > 0) {
+      previewContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     if (parsed.length === 0) {
-      alert('Could not detect any valid tasks. Please check the pasted text.');
+      alert('Could not detect any valid tasks. Please make sure you have copied rows from your sheet.');
     }
   } catch (err) {
-    console.error('Error parsing pasted rows:', err);
-    alert('Error reading pasted rows: ' + err.message);
+    console.error('Error parsing rows:', err);
+    alert('Parse Error: ' + err.message);
   }
 }
 
