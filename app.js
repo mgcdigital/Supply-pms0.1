@@ -1616,6 +1616,7 @@ function setupEventListeners() {
 
   // Add Task Modal
   document.getElementById('btnOpenAddTaskModal')?.addEventListener('click', openAddTaskModal);
+  document.getElementById('btnDirectBulkAdd')?.addEventListener('click', openBulkAddTasksModal);
   document.getElementById('btnCloseAddTaskModal')?.addEventListener('click', closeAddTaskModal);
   document.getElementById('btnCancelAddTaskModal')?.addEventListener('click', closeAddTaskModal);
   document.getElementById('btnSubmitAddTask')?.addEventListener('click', submitNewTask);
@@ -1973,7 +1974,7 @@ function parsePastedRows() {
   const site = sitesData.find(s => s.id === activeSiteId);
   const defaultDoer = document.getElementById('bulkDefaultDoer').value.trim() || (site ? site.siteIncharge : 'Site Incharge');
   const defaultQty = parseFloat(document.getElementById('bulkDefaultQty').value) || 1;
-  const defaultUOM = document.getElementById('bulkDefaultUOM').value.trim() || 'Mtr';
+  const defaultUOM = document.getElementById('bulkDefaultUOM').value.trim() || 'LS';
 
   const lines = text.split(/\r?\n/);
   const parsed = [];
@@ -1983,7 +1984,7 @@ function parsePastedRows() {
     const raw = line.trim();
     if (!raw) return;
 
-    // Detect delimiter: tab, comma, pipe
+    // Detect delimiter: tab (Google Sheets copy), comma, or pipe
     let cols = [];
     if (raw.includes('\t')) {
       cols = raw.split('\t');
@@ -1998,13 +1999,16 @@ function parsePastedRows() {
 
     // Skip known header lines
     const firstColLower = (cols[0] || '').toLowerCase();
-    if (firstColLower.includes('wbs') || firstColLower.includes('s.no') || firstColLower.includes('description') || firstColLower.includes('task title')) {
+    const secondColLower = (cols[1] || '').toLowerCase();
+    if (firstColLower.includes('wbs') || firstColLower.includes('s.no') || firstColLower.includes('serial') ||
+        secondColLower.includes('task title') || secondColLower.includes('description')) {
       return;
     }
 
     let wbs = '';
     let title = '';
     let doer = defaultDoer;
+    let manpower = '6';
     let duration = 7;
     let startDate = '';
     let endDate = '';
@@ -2012,23 +2016,33 @@ function parsePastedRows() {
     let uom = defaultUOM;
 
     if (cols.length === 1) {
-      // Just title
+      // Single column: Task description
       title = cols[0];
     } else if (cols.length === 2) {
-      // WBS + Title
+      // Col 0: WBS/Number, Col 1: Title
       wbs = cols[0];
       title = cols[1];
-    } else if (cols.length >= 3) {
-      // If col 0 looks like WBS or index
+    } else {
+      // Full table row from Google Sheet
+      // Standard structure: WBS | Title | Incharge/Doer | Manpower | Start | End | Duration...
       wbs = cols[0];
       title = cols[1];
-      
-      // Let's analyze remaining cols
-      for (let i = 2; i < cols.length; i++) {
+
+      // Col 2: Doer / Incharge
+      if (cols[2] && /[a-zA-Z]/.test(cols[2])) {
+        doer = cols[2];
+      }
+
+      // Col 3: Manpower
+      if (cols[3] && !isNaN(cols[3])) {
+        manpower = String(cols[3]);
+      }
+
+      // Remaining columns: find dates & duration
+      for (let i = 4; i < cols.length; i++) {
         const val = cols[i];
         if (!val) continue;
 
-        // Check if date (YYYY-MM-DD or DD/MM/YYYY or DD-MM-YYYY)
         const dateMatch = parseAnyDate(val);
         if (dateMatch) {
           if (!startDate) {
@@ -2039,40 +2053,39 @@ function parsePastedRows() {
           continue;
         }
 
-        // Check if numeric duration
-        if (!isNaN(val) && Number(val) > 0 && Number(val) <= 500 && duration === 7 && i <= 4) {
+        // If numeric duration
+        if (!isNaN(val) && Number(val) > 0 && Number(val) <= 1000 && duration === 7) {
           duration = parseInt(val, 10);
-          continue;
         }
+      }
 
-        // Check if Doer (contains letters)
-        if (/[a-zA-Z]/.test(val) && doer === defaultDoer) {
-          doer = val;
-          continue;
-        }
+      // Also check if Col 2 was date instead of doer
+      const col2Date = parseAnyDate(cols[2]);
+      if (col2Date) {
+        startDate = col2Date;
+        doer = defaultDoer;
       }
     }
 
     if (!title) return;
 
-    // Check if title has qty hint like "(6000 MTR)" or "(5 NOS)"
+    // Check if title has qty hint like (6000 MTR)
     const qtyMatch = title.match(/\((\d+(?:\.\d+)?)\s*([a-zA-Z]+)\)/i);
     if (qtyMatch) {
       qty = parseFloat(qtyMatch[1]);
       uom = qtyMatch[2];
     }
 
-    const taskUID = `PMS${String(currentNum++).padStart(5, '0')}`;
-
     parsed.push({
-      id: taskUID,
-      wbs: wbs,
+      id: `PMS${String(currentNum++).padStart(5, '0')}`,
+      wbs: wbs || String(parsed.length + 1),
       title: title,
       totalQty: qty,
       completedQty: 0,
       uom: uom,
       doer: doer,
-      duration: duration || 7,
+      manpower: manpower,
+      duration: duration,
       startDate: startDate || new Date().toISOString().split('T')[0],
       endDate: endDate || '',
       progressPct: 0,
@@ -2081,33 +2094,14 @@ function parsePastedRows() {
     });
   });
 
-  if (parsed.length === 0) {
-    alert('No valid task rows could be parsed. Please check the text format.');
-    return;
-  }
-
   bulkParsedTasks = parsed;
   renderBulkPreview();
 
-  const badge = document.getElementById('parsedCountBadge');
-  badge.textContent = `✓ ${parsed.length} Tasks Ready to Add`;
-  badge.style.display = 'inline-block';
-}
-
-function parseAnyDate(str) {
-  if (!str) return null;
-  const s = str.trim();
-  // YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  // DD/MM/YYYY or DD-MM-YYYY
-  const m1 = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (m1) {
-    const day = m1[1].padStart(2, '0');
-    const month = m1[2].padStart(2, '0');
-    const year = m1[3];
-    return `${year}-${month}-${day}`;
+  const countBadge = document.getElementById('parsedCountBadge');
+  if (countBadge) {
+    countBadge.textContent = `${parsed.length} tasks ready`;
+    countBadge.style.display = 'inline-block';
   }
-  return null;
 }
 
 function renderBulkPreview() {
