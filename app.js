@@ -1,3 +1,30 @@
+
+// Helper to parse dates from various formats (DD-MM-YYYY, DD/MM/YYYY, YYYY-MM-DD, etc.)
+function parseAnyDate(str) {
+  if (!str) return null;
+  const s = String(str).trim();
+
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+  // DD-MM-YYYY or DD/MM/YYYY
+  const dmyMatch = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (dmyMatch) {
+    const day = dmyMatch[1].padStart(2, '0');
+    const month = dmyMatch[2].padStart(2, '0');
+    const year = dmyMatch[3];
+    return `${year}-${month}-${day}`;
+  }
+
+  // YYYY/MM/DD
+  const ymdSlash = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  if (ymdSlash) {
+    return `${ymdSlash[1]}-${ymdSlash[2].padStart(2, '0')}-${ymdSlash[3].padStart(2, '0')}`;
+  }
+
+  return null;
+}
+
 ﻿// Service PMS Application Logic
 
 // Local storage key
