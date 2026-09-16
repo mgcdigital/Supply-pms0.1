@@ -1,1010 +1,1681 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" class="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supply PMS</title>
-  <!-- Google Fonts: Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- SheetJS for Live Excel Export & Sync -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=5">
+  <title>PMS Central Hub | Sites & Operations Console</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            darkbg: '#0b0f19',
+            darkcard: '#151d30',
+            darkborder: '#232f48'
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.15s ease, color 0.15s ease; }
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    .dark .custom-scroll::-webkit-scrollbar-thumb { background: #374151; }
+    .nav-capsule-btn.active { color: #4f46e5; font-weight: 800; }
+    .dark .nav-capsule-btn.active { color: #818cf8; }
+  </style>
 </head>
-<body>
-  <!-- Top Navigation Bar -->
-  <header class="top-nav">
-    <div class="nav-left">
-      <button class="nav-icon-btn" id="menuToggleBtn" title="Toggle Menu">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <div class="logo-box">
-        <div class="logo-icon"><i class="fa-solid fa-wrench"></i></div>
-        <div class="logo-text">
-          <span class="logo-title">Supply PMS</span>
-          <span class="logo-subtitle">Site Execution Console</span>
+<body class="bg-slate-100 text-slate-800 dark:bg-darkbg dark:text-slate-100 antialiased min-h-screen flex flex-col pb-20 text-xs">
+
+  <!-- Header -->
+  <header class="bg-white dark:bg-darkcard border-b border-slate-200 dark:border-darkborder sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-3 sm:px-5">
+      <div class="flex justify-between h-11 items-center">
+        
+        <div class="flex items-center gap-2">
+          <button onclick="toggleSideMenu(true)" class="p-1 rounded-lg border border-slate-200 dark:border-darkborder hover:bg-slate-50 dark:hover:bg-slate-800 transition text-slate-700 dark:text-slate-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" x2="21" y1="12" y2="12"></line>
+              <line x1="3" x2="21" y1="6" y2="6"></line>
+              <line x1="3" x2="21" y1="18" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="bg-indigo-600 w-7 h-7 rounded-lg text-white flex items-center justify-center shrink-0 shadow-xs">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </div>
+
+          <div>
+            <h1 class="text-xs font-extrabold text-slate-900 dark:text-white leading-none">PMS Central Hub</h1>
+            <p class="text-[9px] text-slate-400 font-medium">Sites & Project Directory</p>
+          </div>
         </div>
+
+        <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-lg border border-slate-200 dark:border-darkborder">
+            <select id="userRole" class="bg-transparent text-[11px] font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer" onchange="handleRoleSwitch()">
+              <option value="ADMIN">Super Admin</option>
+              <option value="DOER">Doer Portal</option>
+            </select>
+            <select id="doerDropdownSelect" class="hidden bg-white dark:bg-darkcard text-[11px] border border-slate-300 dark:border-darkborder rounded px-1 py-0.2 outline-none font-semibold text-indigo-900 dark:text-indigo-300" onchange="onDoerUserChange()">
+              <option value="">Select Doer...</option>
+            </select>
+          </div>
+
+          <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-xs flex items-center gap-1 transition">
+            <i data-lucide="plus" class="w-3 h-3"></i>
+            <span>+ Task</span>
+          </button>
+        </div>
+
       </div>
-    </div>
-    
-    <div class="nav-right">
-      <button class="btn-excel-top" id="btnExportExcelTop" title="Export live project Excel sheet">
-        <i class="fa-solid fa-file-excel"></i> Export Excel Sheet
-      </button>
-      <div class="role-badge-group">
-        <span class="role-badge doer">Doer</span>
-        <span class="role-badge super-admin active">Super Admin</span>
-      </div>
-      <button class="logout-btn" id="btnExportData" title="Export Backup JSON">
-        <i class="fa-solid fa-cloud-arrow-down"></i> Backup
-      </button>
-      <button class="logout-btn" id="btnImportData" title="Import Data">
-        <i class="fa-solid fa-cloud-arrow-up"></i> Restore
-      </button>
-      <input type="file" id="fileImporter" accept=".json" style="display:none;">
     </div>
   </header>
 
-  <!-- Main App Container -->
-  <main class="main-container">
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-5 py-2.5 w-full flex-1">
     
-    <!-- ================= VIEW 1: SITES DIRECTORY ================= -->
-    <section id="viewSites" class="view-section active">
-      <div class="section-header-card">
-        <div class="section-title-wrap">
-          <span class="pin-icon"><i class="fa-solid fa-map-pin"></i></span>
-          <div>
-            <h1 class="section-title">SITES & PROJECTS DIRECTORY</h1>
-            <p class="section-desc">Click on any site name to view & execute service tasks. Update completed quantities in real time.</p>
-          </div>
-        </div>
-        <div class="header-actions">
-          <span id="dbStatusBadge" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1;">
-            <span id="dbStatusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
-            <span id="dbStatusText">MongoDB: Checking...</span>
-          </span>
-          <label class="custom-checkbox-label">
-            <input type="checkbox" id="chkShowHidden">
-            <span class="checkbox-custom"></span>
-            Show Hidden Sites
-          </label>
-          <button class="btn btn-primary" id="btnOpenNewSiteModal">
-            <i class="fa-solid fa-plus"></i> Add New Site
-          </button>
-        </div>
+    <!-- Active Doer Banner -->
+    <div id="activeDoerBanner" class="hidden bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 p-2 rounded-xl mb-2 flex items-center justify-between">
+      <div class="flex items-center gap-2 text-xs">
+        <span class="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span>
+        <span class="text-indigo-900 dark:text-indigo-200 font-bold">Filtered Workspace For: <span id="doerBannerName" class="underline"></span></span>
       </div>
+      <span class="text-[10px] bg-indigo-200 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-200 px-2 py-0.5 rounded-full font-bold">Personalized View</span>
+    </div>
 
-      <!-- Sites Grid -->
-      <div class="sites-grid" id="sitesGridContainer">
-        <!-- Dynamically rendered site cards -->
-      </div>
-    </section>
-
-    <!-- ================= VIEW 2: ACTIVE SITE TASKS ================= -->
-    <section id="viewTasks" class="view-section">
-      <!-- Active Site Banner -->
-      <!-- Active Site Banner Bar (Clean, Non-Overflowing) -->
-      <div class="site-banner-bar">
-        <div class="site-banner-left">
-          <span class="pin-icon-white"><i class="fa-solid fa-map-pin"></i></span>
-          <span class="banner-label">Active Project:</span>
-          <span class="banner-site-name" id="currentSiteTitle" title="Click to edit project details">Site Name</span>
-          <span class="banner-site-badge" id="currentSiteProgressBadge">
-            <i class="fa-solid fa-circle-check"></i> <span id="currentSiteProgressText">0% Complete</span>
-          </span>
-        </div>
-
-        <div class="site-banner-actions">
-          <!-- Primary Action Button: Add Task -->
-          <button class="btn btn-emerald" id="btnOpenAddTaskModal" title="Add single new task">
-            <i class="fa-solid fa-plus"></i> Add Task
-          </button>
-          <button class="btn btn-primary" id="btnDirectBulkAdd" style="background:#4f46e5; border-color:#4338ca;" title="Bulk import from Sheets/Excel">
-            <i class="fa-solid fa-table-list"></i> Bulk Add Tasks
-          </button>
-
-          <!-- Single Actions Dropdown (Clean, Professional & No Overflow) -->
-          <div class="actions-dropdown-wrap" id="actionsDropdownWrap">
-            <button class="btn btn-actions-dropdown" id="actionsBtn" type="button" aria-haspopup="true" aria-expanded="false">
-              <i class="fa-solid fa-sliders"></i>
-              <span>Actions</span>
-              <i class="fa-solid fa-chevron-down dropdown-arrow-icon"></i>
-            </button>
-            <div class="actions-dropdown-menu" id="actionsMenu">
-              <a href="#" class="dropdown-item" id="menuItemBulkAdd">
-                <i class="fa-solid fa-table-list text-emerald"></i>
-                <div>
-                  <div class="item-title">Bulk Add Tasks</div>
-                  <div class="item-sub">Copy-paste from Sheets or Excel</div>
-                </div>
-              </a>
-              <a href="#" class="dropdown-item" id="menuItemProjectDetails">
-                <i class="fa-solid fa-pen-to-square text-primary"></i>
-                <div>
-                  <div class="item-title">Project Details</div>
-                  <div class="item-sub">Edit dates, client, PO & stakeholders</div>
-                </div>
-              </a>
-              <a href="#" class="dropdown-item" id="menuItemExportExcel">
-                <i class="fa-solid fa-file-excel text-emerald-dark"></i>
-                <div>
-                  <div class="item-title">Export Excel</div>
-                  <div class="item-sub">Download updated .xlsx sheet</div>
-                </div>
-              </a>
-              <div class="dropdown-divider"></div>
-              <a href="#" class="dropdown-item" id="menuItemSheetsSync">
-                <i class="fa-solid fa-file-waveform text-amber"></i>
-                <div>
-                  <div class="item-title">Google Sheets Sync <span class="sync-indicator-dot" id="sheetsSyncDot"></span></div>
-                  <div class="item-sub">Real-time DB Webhook settings</div>
-                </div>
-              </a>
-            </div>
+    <!-- VIEW 1: COLLAPSIBLE TASKS LIST -->
+    <div id="viewPmsBoard" class="view-section space-y-2">
+      
+      <!-- Filter Toolbar -->
+      <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder p-2 flex flex-wrap items-center justify-between gap-1.5 shadow-2xs">
+        <div class="flex flex-wrap items-center gap-1.5 flex-1 min-w-[260px]">
+          
+          <div class="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-2 py-0.5 min-w-[160px]">
+            <span class="text-[9px] font-bold text-slate-400 uppercase">Site:</span>
+            <select id="filterByProject" onchange="applyFilters()" class="w-full bg-transparent text-[11px] font-bold text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
+              <option value="ALL">All Sites</option>
+            </select>
           </div>
 
-          <!-- Quick Return Button -->
-          <button class="btn btn-glass" id="btnBackToSites" title="Return to directory">
-            <i class="fa-solid fa-arrow-left"></i> Back
-          </button>
-        </div>
-      </div>
-
-      <!-- Project Metadata Header Card (Matching Excel Header) -->
-      <div class="project-info-header-card" id="projectInfoHeaderCard">
-        <div class="proj-meta-grid">
-          <div class="proj-meta-col">
-            <div class="meta-row"><span class="meta-lbl">CLIENT:</span> <span class="meta-val" id="metaClient">-</span></div>
-            <div class="meta-row"><span class="meta-lbl">PO NUMBER:</span> <span class="meta-val" id="metaPO">-</span></div>
-            <div class="meta-row"><span class="meta-lbl">DATA ENTRY OP:</span> <span class="meta-val" id="metaDEO">-</span></div>
-          </div>
-          <div class="proj-meta-col">
-            <div class="meta-row"><span class="meta-lbl">START DATE:</span> <span class="meta-val" id="metaStartDate">-</span></div>
-            <div class="meta-row"><span class="meta-lbl">END DATE:</span> <span class="meta-val" id="metaEndDate">-</span></div>
-            <div class="meta-row"><span class="meta-lbl">DURATION:</span> <span class="meta-val" id="metaDuration">-</span></div>
-          </div>
-          <div class="proj-meta-col">
-            <div class="meta-row"><span class="meta-lbl">OWNER:</span> <span class="meta-val" id="metaOwner">-</span></div>
-            <div class="meta-row"><span class="meta-lbl">VRE:</span> <span class="meta-val" id="metaVRE">-</span></div>
-            <div class="meta-row"><span class="meta-lbl">SITE INCHARGE:</span> <span class="meta-val" id="metaIncharge">-</span></div>
-            <div class="meta-row"><span class="meta-lbl">COORDINATOR:</span> <span class="meta-val" id="metaCoordinator">-</span></div>
-          </div>
-        </div>
-
-        <!-- Buffer Status Bar -->
-        <div class="buffer-status-bar" id="bufferStatusBar" style="display:none;">
-          <div class="buffer-bar-inner">
-            <div class="buffer-pill" id="bufferPillPlan">
-              <i class="fa-solid fa-calendar-days"></i>
-              <span class="bpill-label">Plan</span>
-              <span class="bpill-val" id="bufferValPlan">-</span>
-            </div>
-            <div class="buffer-divider"></div>
-            <div class="buffer-pill" id="bufferPillBuffer">
-              <i class="fa-solid fa-clock-rotate-left"></i>
-              <span class="bpill-label">Buffer</span>
-              <span class="bpill-val" id="bufferValBuffer">-</span>
-            </div>
-            <div class="buffer-divider"></div>
-            <div class="buffer-pill" id="bufferPillUsed">
-              <i class="fa-solid fa-fire-flame-curved"></i>
-              <span class="bpill-label">Used</span>
-              <span class="bpill-val" id="bufferValUsed">-</span>
-            </div>
-            <div class="buffer-divider"></div>
-            <div class="buffer-pill" id="bufferPillRemaining">
-              <i class="fa-solid fa-shield-check"></i>
-              <span class="bpill-label">Remaining</span>
-              <span class="bpill-val" id="bufferValRemaining">-</span>
-            </div>
-            <div class="buffer-divider" id="bufferBeyondDivider" style="display:none;"></div>
-            <div class="buffer-pill buffer-pill-danger" id="bufferPillBeyond" style="display:none;">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <span class="bpill-label">Beyond Buffer</span>
-              <span class="bpill-val" id="bufferValBeyond">-</span>
-            </div>
-            <div class="buffer-status-badge" id="bufferStatusBadge">-</div>
-          </div>
-
-          <!-- Progress Track -->
-          <div class="buffer-track-wrap">
-            <div class="buffer-track">
-              <div class="buffer-track-planned" id="bufferTrackPlanned" style="width:0%;" title="Planned Days"></div>
-              <div class="buffer-track-used" id="bufferTrackUsed" style="width:0%;" title="Buffer Used"></div>
-              <div class="buffer-track-beyond" id="bufferTrackBeyond" style="width:0%;" title="Beyond Buffer"></div>
-            </div>
-            <div class="buffer-track-labels">
-              <span id="bufferTrackLabelStart">Start</span>
-              <span id="bufferTrackLabelEnd">Planned End</span>
-              <span id="bufferTrackLabelBuffer">Buffer End</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Filters & Controls Bar -->
-      <div class="task-controls-bar">
-        <div class="filter-group">
-          <div class="select-wrapper">
-            <label>SITE:</label>
-            <select id="selectActiveSiteDropdown" class="custom-select"></select>
-          </div>
-          <div class="select-wrapper">
-            <label>STATUS:</label>
-            <select id="selectStatusFilter" class="custom-select">
-              <option value="ALL">All Status</option>
-              <option value="COMPLETED">100% Completed</option>
-              <option value="IN_PROGRESS">In Progress (>0%)</option>
-              <option value="PENDING">Pending (0%)</option>
+          <div class="flex items-center gap-1 bg-indigo-50/70 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-0.5 min-w-[140px]">
+            <span class="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase">Doer:</span>
+            <select id="filterByDoer" onchange="applyFilters()" class="w-full bg-transparent text-[11px] font-bold text-indigo-950 dark:text-indigo-200 outline-none cursor-pointer">
+              <option value="ALL">All Members</option>
             </select>
           </div>
         </div>
 
-        <div class="search-refresh-group">
-          <!-- View Switcher (Table vs Gantt Chart) -->
-          <div class="view-toggle-pills">
-            <button class="toggle-pill-btn active" id="btnViewTable" title="List / Table View">
-              <i class="fa-solid fa-table-list"></i> Table View
-            </button>
-            <button class="toggle-pill-btn" id="btnViewGantt" title="Timeline / Gantt Chart View">
-              <i class="fa-solid fa-chart-gantt"></i> Gantt Timeline
-            </button>
-          </div>
+        <div class="flex items-center gap-1">
+          <input type="text" id="searchInput" placeholder="Search task, step, WBS..." oninput="applyFilters()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-2 py-0.5 text-[11px] outline-none focus:border-indigo-500 dark:text-slate-100 w-40 font-medium">
 
-          <div class="search-input-box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="taskSearchInput" placeholder="Search task, step, WBS, or Doer...">
-          </div>
-          <button class="btn-refresh" id="btnRefreshTasks" title="Refresh">
-            <i class="fa-solid fa-rotate-right"></i> Refresh
+          <button onclick="exportToCSV()" class="bg-white dark:bg-darkcard hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-darkborder rounded-lg px-2 py-0.5 text-[11px] font-bold flex items-center gap-1 shadow-2xs transition">
+            <i data-lucide="download" class="w-3 h-3 text-emerald-600"></i>
+            <span>CSV</span>
+          </button>
+
+          <button onclick="loadDashboardData()" class="p-1 text-slate-500 dark:text-slate-400 hover:text-indigo-600 border border-slate-200 dark:border-darkborder rounded-lg hover:bg-white dark:hover:bg-slate-800 transition" title="Refresh">
+            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
           </button>
         </div>
       </div>
 
-      <!-- Bulk Delete Action Bar (Super Admin Only) -->
-      <div class="bulk-action-bar" id="bulkActionBar" style="display:none;">
-        <div class="bulk-action-inner">
-          <label class="bulk-select-all-label" title="Select All visible rows">
-            <input type="checkbox" id="chkSelectAll" onchange="toggleSelectAll(this.checked)">
-            <span>Select All</span>
-          </label>
-          <div class="bulk-divider"></div>
-          <span class="bulk-count-label"><span id="bulkSelectedCount">0</span> Tasks Selected</span>
-          <button class="btn-bulk-delete" id="btnDeleteSelected" onclick="bulkDeleteSelected()" disabled>
-            <i class="fa-solid fa-trash-can"></i> Delete Selected
-          </button>
-        </div>
+      <div id="collapsibleTasksContainer" class="space-y-2">
+        <p class="text-center py-6 text-slate-400 text-xs">Loading database records...</p>
       </div>
 
-      <!-- Tasks Table Card -->
-      <div class="table-container-card" id="cardTableView">
-        <div class="table-responsive">
-          <table class="tasks-table">
-            <thead>
-              <tr>
-                <th class="th-checkbox" id="thCheckboxCol" style="width: 36px; display: none;"></th>
-                <th style="width: 120px;">UNIQUE ID</th>
-                <th style="width: 80px;">WBS</th>
-                <th>ACTION / STEP DESCRIPTION</th>
-                <th style="width: 160px;">QTY & PROGRESS</th>
-                <th style="width: 130px;">DOER</th>
-                <th style="width: 110px;">PLAN DATES</th>
-                <th style="width: 180px;">REMARKS</th>
-                <th style="width: 110px;">STATUS</th>
-                <th style="width: 110px; text-align: center;">ACTION</th>
-              </tr>
-            </thead>
-            <tbody id="tasksTableBody">
-              <!-- Dynamically rendered task rows -->
-            </tbody>
-          </table>
-        </div>
-      </div>
+    </div>
 
-      <!-- Gantt Chart Interactive Card -->
-      <div class="gantt-container-card" id="cardGanttView" style="display: none;">
-        <div class="gantt-header-toolbar">
-          <div class="gantt-title-wrap">
-            <i class="fa-solid fa-chart-gantt text-primary"></i>
+    <!-- VIEW 2: REVIEW CONSOLE -->
+    <div id="viewReview" class="view-section hidden space-y-2.5">
+      <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder p-3 shadow-2xs space-y-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">🔍</span>
             <div>
-              <h2 class="gantt-title">Project Schedule & Duration Timeline (Gantt Chart)</h2>
-              <p class="gantt-subtitle">Visual analysis of task duration: Which tasks take the most time vs quick milestones.</p>
+              <h2 class="text-xs font-bold text-slate-900 dark:text-white">PMS Review Console</h2>
+              <p class="text-[9px] text-slate-400">Sequential chronological inspection</p>
             </div>
           </div>
-          <div class="gantt-legend">
-            <span class="legend-item"><span class="legend-box lg-completed"></span> Completed (100%)</span>
-            <span class="legend-item"><span class="legend-box lg-inprogress"></span> In Progress</span>
-            <span class="legend-item"><span class="legend-box lg-pending"></span> Pending Scope</span>
+
+          <div class="flex items-center gap-1.5">
+            <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Select PMS:</label>
+            <select id="reviewPmsSelector" onchange="renderSpecificPmsReview()" class="bg-indigo-50 dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-0.5 text-xs font-extrabold text-indigo-950 dark:text-indigo-200 outline-none cursor-pointer"></select>
           </div>
         </div>
 
-        <div class="gantt-body-wrap">
-          <div class="gantt-timeline-container" id="ganttTimelineContainer">
-            <!-- Dynamically populated Gantt bars -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1.5 border-t border-slate-100 dark:border-darkborder">
+          <div class="bg-slate-50 dark:bg-slate-800/80 p-1.5 rounded-lg border border-slate-200 dark:border-darkborder text-center">
+            <p class="text-[8px] uppercase font-bold text-slate-400">Progress</p>
+            <h4 class="text-xs font-extrabold text-indigo-600 dark:text-indigo-400" id="kpiProgress">0%</h4>
+          </div>
+          <div class="bg-emerald-50 dark:bg-emerald-950/40 p-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900 text-center">
+            <p class="text-[8px] uppercase font-bold text-emerald-700 dark:text-emerald-400">Done</p>
+            <h4 class="text-xs font-extrabold text-emerald-800 dark:text-emerald-300" id="kpiCompleted">0</h4>
+          </div>
+          <div class="bg-amber-50 dark:bg-amber-950/40 p-1.5 rounded-lg border border-amber-200 dark:border-amber-900 text-center">
+            <p class="text-[8px] uppercase font-bold text-amber-700 dark:text-amber-400">Active</p>
+            <h4 class="text-xs font-extrabold text-amber-800 dark:text-amber-300" id="kpiInProgress">0</h4>
+          </div>
+          <div class="bg-rose-50 dark:bg-rose-950/40 p-1.5 rounded-lg border border-rose-200 dark:border-rose-900 text-center">
+            <p class="text-[8px] uppercase font-bold text-rose-700 dark:text-rose-400">Overdue</p>
+            <h4 class="text-xs font-extrabold text-rose-800 dark:text-rose-300" id="kpiDelayed">0</h4>
+          </div>
+          <div class="bg-slate-50 dark:bg-slate-800/80 p-1.5 rounded-lg border border-slate-200 dark:border-darkborder text-center col-span-2 sm:col-span-1">
+            <p class="text-[8px] uppercase font-bold text-slate-400">Pending</p>
+            <h4 class="text-xs font-extrabold text-slate-700 dark:text-slate-300" id="kpiPending">0</h4>
           </div>
         </div>
+
+        <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+          <div id="reviewProgressBar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
       </div>
-    </section>
+
+      <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder p-3 shadow-2xs space-y-2">
+        <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-darkborder text-[11px]">
+          <span class="font-bold text-slate-800 dark:text-slate-200">Step Stream (<span id="unifiedTotalBadge">0</span> Steps)</span>
+          <div class="flex items-center gap-2 text-[10px] font-semibold">
+            <span class="text-emerald-600">● Done</span>
+            <span class="text-rose-600">● Overdue</span>
+            <span class="text-amber-600">● Active</span>
+            <span class="text-slate-400">● Pending</span>
+          </div>
+        </div>
+
+        <div id="unifiedStepsBoxContainer" class="space-y-1.5 max-h-[640px] overflow-y-auto custom-scroll pr-1"></div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: VENDORS DIRECTORY -->
+    <div id="viewVendors" class="view-section hidden space-y-2">
+      <div class="bg-white dark:bg-darkcard p-2.5 rounded-xl border border-slate-200 dark:border-darkborder flex items-center justify-between">
+        <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Vendor & PO Directory</span>
+        <span id="vendorTotalCountBadge" class="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-2 py-0.2 rounded-full text-[10px] font-bold font-mono">0 Vendors</span>
+      </div>
+      <div id="vendorCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"></div>
+    </div>
+
+    <!-- VIEW 4: SITES & PROJECTS DIRECTORY (Dedicated Panel) -->
+    <div id="viewSites" class="view-section hidden space-y-2.5">
+      <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-base">📍</span>
+          <div>
+            <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Sites & Projects Directory</h2>
+            <p class="text-[9px] text-slate-400">Manage site titles, PO numbers, and personnel assignments</p>
+          </div>
+        </div>
+        <button onclick="openSiteModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>+ Add New Site</span>
+        </button>
+      </div>
+
+      <div id="sitesCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <p class="text-xs text-slate-400 py-6 text-center">Loading sites...</p>
+      </div>
+    </div>
+
+    <!-- VIEW 5: TEAM DIRECTORY -->
+    <div id="viewTeam" class="view-section hidden space-y-2">
+      <div class="bg-white dark:bg-darkcard p-2.5 rounded-xl border border-slate-200 dark:border-darkborder flex items-center justify-between">
+        <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Team Directory</span>
+        <button onclick="openAddMemberModal()" class="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded transition">+ Add Member</button>
+      </div>
+      <div id="teamCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"></div>
+    </div>
 
   </main>
 
-  <!-- ================= BOTTOM NAVIGATION DOCK ================= -->
-  <nav class="bottom-dock">
-    <div class="dock-pill">
-      <button class="dock-btn active" id="dockBtnSites" data-target="viewSites">
-        <i class="fa-solid fa-map-pin"></i>
-        <span>Sites</span>
+  <!-- Bottom Capsule Bar (With Sites Tab) -->
+  <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-40">
+    <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-full shadow-xl px-4 py-1.5 flex items-center gap-4 sm:gap-6">
+      <button onclick="switchTab('viewPmsBoard')" id="tabBtn-viewPmsBoard" class="nav-capsule-btn active flex flex-col items-center text-slate-500 hover:text-indigo-600 transition">
+        <span class="text-xs">📦</span>
+        <span class="text-[10px]">Tasks</span>
       </button>
-      <button class="dock-btn" id="dockBtnTasks" data-target="viewTasks">
-        <i class="fa-solid fa-list-check"></i>
-        <span>Tasks</span>
+      <button onclick="switchTab('viewReview')" id="tabBtn-viewReview" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition">
+        <span class="text-xs">🔍</span>
+        <span class="text-[10px]">Review</span>
+      </button>
+      <button onclick="switchTab('viewVendors')" id="tabBtn-viewVendors" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition">
+        <span class="text-xs">🏢</span>
+        <span class="text-[10px]">Vendors</span>
+      </button>
+      <button onclick="switchTab('viewSites')" id="tabBtn-viewSites" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition">
+        <span class="text-xs">📍</span>
+        <span class="text-[10px]">Sites</span>
+      </button>
+      <button onclick="switchTab('viewTeam')" id="tabBtn-viewTeam" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition">
+        <span class="text-xs">👥</span>
+        <span class="text-[10px]">Team</span>
       </button>
     </div>
-  </nav>
+  </div>
 
-  <!-- ================= MODAL 1: UPDATE QUANTITY (DOER) ================= -->
-  <div class="modal-backdrop" id="modalUpdateQty">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <h3 class="modal-title" id="updateModalTaskTitle">Update Task Progress</h3>
-          <p class="modal-subtitle" id="updateModalTaskSub">ID: RDMS00003 | Dinesh Purohit</p>
-        </div>
-        <button class="modal-close-btn" id="btnCloseUpdateModal" title="Close dialog">
-          <i class="fa-solid fa-xmark"></i>
+  <!-- Left Drawer -->
+  <div id="sideMenuDrawer" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity" onclick="toggleSideMenu(false)"></div>
+    <div class="fixed left-0 top-0 bottom-0 max-w-xs w-full bg-white dark:bg-darkcard shadow-2xl z-50 flex flex-col p-4 border-r border-slate-200 dark:border-darkborder animate-in slide-in-from-left duration-150">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-darkborder">
+        <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Navigation Menu</span>
+        <button onclick="toggleSideMenu(false)" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="py-2.5 space-y-1">
+        <button onclick="toggleSideMenu(false); switchTab('viewPmsBoard')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <span>📦</span>
+          <span>PMS Main Tasks & Steps</span>
+        </button>
+        <button onclick="toggleSideMenu(false); switchTab('viewReview')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <span>🔍</span>
+          <span>Single PMS Review & Audit</span>
+        </button>
+        <button onclick="toggleSideMenu(false); switchTab('viewVendors')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <span>🏢</span>
+          <span>Vendors Directory & POs</span>
+        </button>
+        <button onclick="toggleSideMenu(false); switchTab('viewSites')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <span>📍</span>
+          <span>Sites & Projects Management</span>
+        </button>
+        <button onclick="toggleSideMenu(false); switchTab('viewTeam')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <span>👥</span>
+          <span>Team Directory</span>
         </button>
       </div>
 
-      <div class="modal-body">
-        <div class="scope-info-box">
-          <div class="info-item">
-            <span class="info-lbl">Total Scope Qty:</span>
-            <span class="info-val" id="dispTotalQty">500 Mtr</span>
-          </div>
-          <div class="info-item">
-            <span class="info-lbl">Already Completed:</span>
-            <span class="info-val text-emerald" id="dispCompletedQty">200 Mtr</span>
-          </div>
-          <div class="info-item">
-            <span class="info-lbl">Remaining:</span>
-            <span class="info-val text-amber" id="dispRemainingQty">300 Mtr</span>
-          </div>
+      <div class="mt-auto pt-3 border-t border-slate-100 dark:border-darkborder space-y-2.5">
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">Appearance:</label>
+          <button onclick="toggleDarkMode()" class="w-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-darkborder rounded-lg py-1 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition">
+            <span id="drawerThemeIcon">🌙</span>
+            <span id="drawerThemeLabel">Toggle Dark Mode</span>
+          </button>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            <strong>Update Total Completed Qty:</strong>
-            <span class="text-muted">(Ex: Agar total 5 me se 5 ho gaya to 5 likhein &rarr; 100% complete)</span>
-          </label>
-          <div class="input-with-uom">
-            <input type="number" step="any" min="0" id="inputNewCompletedQty" class="form-control large-input" placeholder="Enter completed qty...">
-            <span class="uom-tag" id="dispUomBadge">Mtr</span>
-          </div>
-        </div>
-
-        <div class="progress-preview-card">
-          <div class="preview-header">
-            <span>Resulting Progress:</span>
-            <span class="preview-pct" id="calcProgressPctText">0%</span>
-          </div>
-          <div class="preview-progress-track">
-            <div class="preview-progress-fill" id="calcProgressFill" style="width: 0%;"></div>
-          </div>
-          <div class="preview-status" id="calcProgressStatus">Pending</div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group col-6">
-            <label class="form-label">Assigned Doer / Incharge:</label>
-            <input type="text" id="inputDoerName" class="form-control" placeholder="Doer name">
-          </div>
-          <div class="form-group col-6">
-            <label class="form-label">Manpower Used:</label>
-            <input type="text" id="inputManpower" class="form-control" placeholder="e.g. 8 workers">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Work Remarks / Daily Progress Note:</label>
-          <textarea id="inputRemarks" class="form-control" rows="2" placeholder="e.g. Cable laid upto pillar box 2, pending joints..."></textarea>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-light" id="btnCancelUpdateModal">Cancel</button>
-        <button class="btn btn-primary" id="btnSaveTaskProgress">
-          <i class="fa-solid fa-check"></i> Save & Update Progress
-        </button>
       </div>
     </div>
   </div>
 
-  <!-- ================= MODAL 2: ADD / EDIT PROJECT ================= -->
-  <div class="modal-backdrop" id="modalAddSite">
-    <div class="modal-card modal-card-lg">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <h3 class="modal-title" id="siteModalHeading">Create New Service Project</h3>
-          <p class="modal-subtitle">Configure project information, timeline, and stakeholder details</p>
-        </div>
-        <button class="modal-close-btn" id="btnCloseAddSiteModal" title="Close dialog">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+  <!-- Modal: Add / Edit Site (With Optional Metadata Fields) -->
+  <div id="siteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-lg w-full p-4 shadow-2xl border border-slate-100 dark:border-darkborder relative max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-darkborder">
+        <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="modalSiteTitle">Add / Edit Site</h3>
+        <button onclick="toggleModal('siteModal', false)" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
-      <div class="modal-body">
-        <!-- Section 1: Basic Project Details Card -->
-        <div class="form-section-card">
-          <div class="section-card-title">
-            <i class="fa-solid fa-folder-tree"></i> Project Information
+      <form onsubmit="event.preventDefault(); saveSiteData();" class="overflow-y-auto custom-scroll py-2.5 space-y-2.5 flex-1 pr-1 text-xs">
+        <input type="hidden" id="editSiteId">
+
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site Name / Location *</label>
+          <input type="text" id="formSiteName" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-2.5 py-1 text-xs outline-none focus:border-indigo-500 font-bold dark:text-white" placeholder="e.g. Bhilwara Plant">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">Company Name</label>
+            <input type="text" id="formCompanyName" value="MAHESHWARI DISTRIBUTORS" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-xs dark:text-white">
+          </div>
+          <div>
+            <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">Project Title</label>
+            <input type="text" id="formProjectTitle" placeholder="e.g. SUPPLY PMS: EV Charging" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-xs dark:text-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">PO Number</label>
+            <input type="text" id="formPoNumber" placeholder="e.g. 5100033887" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-xs dark:text-white font-mono">
+          </div>
+          <div>
+            <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">Project Owner</label>
+            <input type="text" id="formProjectOwner" placeholder="Owner name" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-xs dark:text-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">Process Coordinator</label>
+            <input type="text" id="formProcCoord" value="Tulsi Sen" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-xs dark:text-white">
+          </div>
+          <div>
+            <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">Technical Person</label>
+            <input type="text" id="formTechPerson" value="Heera lal Ji (8003698656)" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-xs dark:text-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">Purchaser Person</label>
+            <input type="text" id="formPurchaser" value="Ronak Ji (8107688615)" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-xs dark:text-white">
+          </div>
+          <div>
+            <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">VRE Person</label>
+            <input type="text" id="formVre" value="Aarti Bala (8824133320)" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-xs dark:text-white">
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 dark:border-darkborder flex items-center justify-end gap-1.5">
+          <button type="button" onclick="toggleModal('siteModal', false)" class="px-2.5 py-1 font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-lg">Cancel</button>
+          <button type="submit" id="btnSaveSite" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded-lg shadow-sm transition">
+            Save Site Record
+          </button>
+        </div>
+      </form>
+      <div id="siteAlert" class="mt-1"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Team Member -->
+  <div id="editDoerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-xs w-full p-4 shadow-2xl border border-slate-100 dark:border-darkborder relative">
+      <button onclick="toggleModal('editDoerModal', false)" class="absolute right-3 top-3 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+      
+      <div class="flex items-center gap-1.5 mb-2.5">
+        <i data-lucide="user-cog" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
+        <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="modalDoerTitle">Edit Team Member</h3>
+      </div>
+
+      <form onsubmit="event.preventDefault(); saveEditedDoer();" class="space-y-2">
+        <input type="hidden" id="editDoerId">
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Name</label>
+          <input type="text" id="editDoerName" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-2 py-1 text-xs outline-none focus:border-indigo-500 font-bold dark:text-white">
+        </div>
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Role / Designation</label>
+          <input type="text" id="editDoerRole" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-2 py-1 text-xs outline-none focus:border-indigo-500 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Email Address</label>
+          <input type="email" id="editDoerEmail" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-2 py-1 text-xs outline-none focus:border-indigo-500 font-mono dark:text-white">
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-1.5">
+          <button type="button" onclick="toggleModal('editDoerModal', false)" class="px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-lg">Cancel</button>
+          <button type="submit" id="btnSaveEditedDoer" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg text-[11px] shadow-sm transition">
+            Save Member
+          </button>
+        </div>
+      </form>
+      <div id="editDoerAlert" class="mt-1"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Create Task & Steps -->
+  <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-3xl w-full p-4 shadow-2xl border border-slate-100 dark:border-darkborder relative max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-darkborder">
+        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Create Main Task & Steps</h3>
+        <button onclick="toggleModal('createTaskModal', false)" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); submitFullTaskPackage();" class="overflow-y-auto custom-scroll py-2.5 space-y-2.5 flex-1 pr-1">
+        
+        <div class="bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-xl border border-slate-200 dark:border-darkborder space-y-2">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site / Project Name</label>
+              <input type="text" id="mProject" required list="projectSuggestions" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2 py-1 text-xs outline-none focus:border-indigo-500 font-bold dark:text-white" value="EV Charging_CLZS">
+              <datalist id="projectSuggestions"></datalist>
+            </div>
+            <div>
+              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Main Task Name</label>
+              <input type="text" id="mItemName" required class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2 py-1 text-xs outline-none focus:border-indigo-500 font-bold dark:text-white" placeholder="e.g. Supply of 11 kV Extension Panel">
+            </div>
           </div>
 
-          <!-- Row 1: Project Title & Client -->
-          <div class="form-row">
-            <div class="form-group col-6">
-              <label class="form-label">Project Title <span class="text-danger">*</span></label>
-              <input type="text" id="newSiteName" class="form-control" placeholder="Project name or title" required>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Category</label>
+              <select id="mType" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2 py-1 text-xs font-semibold outline-none dark:text-white">
+                <option value="SUPPLY">SUPPLY PMS</option>
+                <option value="SERVICE">SERVICE PMS</option>
+              </select>
             </div>
-            <div class="form-group col-6">
-              <label class="form-label">Client / Company</label>
-              <input type="text" id="newSiteClient" class="form-control" placeholder="Client or organization name">
+            <div>
+              <label class="block text-[9px] font-bold text-indigo-700 dark:text-indigo-400 uppercase mb-0.5">Start Date</label>
+              <input type="date" id="mStartDate" required onchange="recalculateAllStepDates()" class="w-full bg-white dark:bg-darkcard border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-0.5 text-xs font-bold text-indigo-900 dark:text-indigo-300 outline-none">
             </div>
-          </div>
-
-          <!-- Row 2: PO Number & Data Entry Operator -->
-          <div class="form-row">
-            <div class="form-group col-6">
-              <label class="form-label">PO Number</label>
-              <input type="text" id="newSitePO" class="form-control" placeholder="Enter purchase order number">
-            </div>
-            <div class="form-group col-6">
-              <label class="form-label">Data Entry Operator</label>
-              <input type="text" id="newSiteDEO" class="form-control" placeholder="Operator full name">
-            </div>
-          </div>
-
-          <!-- Row 3: Project Start Date & End Date -->
-          <div class="form-row">
-            <div class="form-group col-6">
-              <label class="form-label">Project Start Date</label>
-              <input type="date" id="newSiteStartDate" class="form-control">
-            </div>
-            <div class="form-group col-6">
-              <label class="form-label">Project End Date</label>
-              <input type="date" id="newSiteEndDate" class="form-control">
-            </div>
-          </div>
-
-          <!-- Row 4: Buffer Days -->
-          <div class="form-row">
-            <div class="form-group col-6">
-              <label class="form-label">
-                <i class="fa-solid fa-clock-rotate-left" style="color:#7c3aed;"></i>
-                Buffer Days (Time Bank)
-                <span class="form-hint">Extra days allowed beyond planned duration</span>
-              </label>
-              <input type="number" id="newSiteBufferDays" class="form-control" placeholder="e.g. 5" min="0" max="365" value="0">
-            </div>
-            <div class="form-group col-6" style="display:flex;align-items:flex-end;padding-bottom:4px;">
-              <div class="buffer-info-tip">
-                <i class="fa-solid fa-circle-info"></i>
-                If project exceeds planned duration, buffer days will be consumed automatically. Overdue days will show once buffer is exhausted.
-              </div>
+            <div>
+              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Qty</label>
+              <input type="number" id="mQty" required value="1" min="1" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2 py-0.5 text-xs font-mono outline-none dark:text-white">
             </div>
           </div>
         </div>
 
-        <!-- Section 2: Key Stakeholders & Contact Info Card (Split Name & Phone) -->
-        <div class="form-section-card">
-          <div class="section-card-title">
-            <i class="fa-solid fa-address-book"></i> Key Stakeholders & Contacts
-          </div>
-
-          <!-- Stakeholder: Project Owner -->
-          <div class="stakeholder-block">
-            <span class="stakeholder-role-label">Project Owner</span>
-            <div class="form-row">
-              <div class="form-group col-6">
-                <input type="text" id="newSiteOwnerName" class="form-control" placeholder="Owner full name (e.g. DK Shriwal)">
-              </div>
-              <div class="form-group col-6">
-                <div class="phone-input-group">
-                  <span class="phone-prefix">+91</span>
-                  <input type="tel" id="newSiteOwnerPhone" class="form-control phone-field" placeholder="10-digit mobile number">
-                </div>
-              </div>
+        <div class="bg-indigo-50/60 dark:bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900 space-y-2">
+          <span class="text-[9px] font-extrabold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider block">Project & Personnel Metadata (Optional)</span>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">Company Name</label>
+              <input type="text" id="mCompanyName" value="MAHESHWARI DISTRIBUTORS" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-[11px] dark:text-white">
             </div>
-          </div>
-
-          <!-- Stakeholder: VRE -->
-          <div class="stakeholder-block">
-            <span class="stakeholder-role-label">VRE (Vendor Representative)</span>
-            <div class="form-row">
-              <div class="form-group col-6">
-                <input type="text" id="newSiteVREName" class="form-control" placeholder="VRE full name (e.g. Aarti Bala)">
-              </div>
-              <div class="form-group col-6">
-                <div class="phone-input-group">
-                  <span class="phone-prefix">+91</span>
-                  <input type="tel" id="newSiteVREPhone" class="form-control phone-field" placeholder="10-digit mobile number">
-                </div>
-              </div>
+            <div>
+              <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">Project Title</label>
+              <input type="text" id="mProjectTitle" placeholder="e.g. SUPPLY PMS: EV Charging" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-[11px] dark:text-white">
             </div>
-          </div>
-
-          <!-- Stakeholder: Site Incharge -->
-          <div class="stakeholder-block">
-            <span class="stakeholder-role-label">Site Incharge</span>
-            <div class="form-row">
-              <div class="form-group col-6">
-                <input type="text" id="newSiteInchargeName" class="form-control" placeholder="Site incharge name (e.g. Dinesh Purohit)">
-              </div>
-              <div class="form-group col-6">
-                <div class="phone-input-group">
-                  <span class="phone-prefix">+91</span>
-                  <input type="tel" id="newSiteInchargePhone" class="form-control phone-field" placeholder="10-digit mobile number">
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Stakeholder: Process Coordinator -->
-          <div class="stakeholder-block">
-            <span class="stakeholder-role-label">Process Coordinator</span>
-            <div class="form-row">
-              <div class="form-group col-6">
-                <input type="text" id="newSiteCoordinatorName" class="form-control" placeholder="Coordinator name (e.g. Tulsi Sen)">
-              </div>
-              <div class="form-group col-6">
-                <div class="phone-input-group">
-                  <span class="phone-prefix">+91</span>
-                  <input type="tel" id="newSiteCoordinatorPhone" class="form-control phone-field" placeholder="10-digit mobile number">
-                </div>
-              </div>
+            <div>
+              <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">PO Number</label>
+              <input type="text" id="mPoNumber" placeholder="e.g. 5100033887" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-[11px] dark:text-white font-mono">
             </div>
           </div>
         </div>
 
-        <!-- Template Selection -->
-        <div class="form-group" id="siteTemplateGroup">
-          <label class="form-label">Initial Task Template</label>
-          <select id="newSiteTemplate" class="form-control">
-            <option value="empty">Start with Empty Site (Add tasks manually)</option>
-            <option value="substation">Copy Standard 2 MVA Substation Service Checklist (101 Tasks)</option>
+        <div class="bg-indigo-50/60 dark:bg-indigo-950/40 p-2 rounded-xl border border-indigo-100 dark:border-indigo-900 flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">Steps Count:</span>
+            <input type="number" id="quickStepCount" min="1" max="30" value="5" class="w-12 bg-white dark:bg-darkcard border border-indigo-300 dark:border-indigo-800 rounded px-1 py-0.5 text-xs font-bold text-center text-indigo-900 dark:text-indigo-300 outline-none">
+            <button type="button" onclick="generateBatchSteps(document.getElementById('quickStepCount').value)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold px-2 py-0.5 rounded transition">
+              Generate
+            </button>
+          </div>
+          <button type="button" onclick="addSingleStepRow()" class="text-indigo-700 dark:text-indigo-400 text-[11px] font-bold flex items-center gap-1">
+            <i data-lucide="plus" class="w-3 h-3"></i> +1 Step
+          </button>
+        </div>
+
+        <div id="stepsContainer" class="space-y-1.5"></div>
+
+        <div class="pt-2 border-t border-slate-100 dark:border-darkborder flex items-center justify-end gap-1.5">
+          <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-lg transition">Cancel</button>
+          <button type="submit" id="btnSaveFullTask" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1 rounded-lg text-[11px] shadow-sm transition flex items-center gap-1">
+            <i data-lucide="check" class="w-3 h-3"></i>
+            <span>Save in DB</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Doer Edit Execution -->
+  <div id="doerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border border-slate-100 dark:border-darkborder relative">
+      <button onclick="toggleModal('doerModal', false)" class="absolute right-3 top-3 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+      
+      <div class="flex items-center gap-1.5 mb-2">
+        <i data-lucide="edit-3" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"></i>
+        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Update Execution</h3>
+      </div>
+      <p id="modalStepTitle" class="text-[11px] text-slate-500 dark:text-slate-400 mb-2 bg-slate-50 dark:bg-slate-800 p-1.5 rounded-lg border border-slate-100 dark:border-darkborder font-medium"></p>
+
+      <div id="dependencyWarningBox" class="hidden p-2 mb-2 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 rounded-lg text-[10px] font-semibold">
+        🔒 <b>Sequential Lock Active:</b> Previous step is not completed yet. You can set status to <i>In Progress</i> or <i>Pending</i>, but cannot mark <i>Completed</i> until previous step finishes.
+      </div>
+
+      <form onsubmit="event.preventDefault(); saveDoerExecution();" class="space-y-2">
+        <input type="hidden" id="editTaskId">
+        <input type="hidden" id="editStepId">
+
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Status</label>
+          <select id="editStatus" class="w-full border border-slate-200 dark:border-darkborder dark:bg-slate-800 dark:text-white rounded-lg px-2 py-1 text-xs font-bold outline-none">
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed" id="optCompleted">Completed (Done)</option>
+            <option value="Delayed">Delayed</option>
           </select>
         </div>
-      </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary-outline" id="btnCancelAddSiteModal">Cancel</button>
-        <button class="btn btn-primary" id="btnSubmitAddSite">
-          <i class="fa-solid fa-floppy-disk"></i> <span id="siteModalSubmitBtnText">Create Project</span>
+        <div id="vendorFieldGroup" class="hidden bg-amber-50/60 dark:bg-slate-800/80 p-2 rounded-xl border border-amber-200 dark:border-amber-900/60 space-y-1.5">
+          <span class="text-[9px] font-extrabold text-amber-800 dark:text-amber-400 uppercase">Vendor & PO Details</span>
+          <div class="grid grid-cols-2 gap-1.5">
+            <input type="text" id="editVendorName" placeholder="Vendor Name" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-1.5 py-0.5 text-xs dark:text-white">
+            <input type="text" id="editPoNumber" placeholder="PO Number" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-1.5 py-0.5 text-xs dark:text-white font-mono">
+          </div>
+          <div class="grid grid-cols-2 gap-1.5">
+            <input type="text" id="editVendorPerson" placeholder="Contact Person" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-1.5 py-0.5 text-xs dark:text-white">
+            <input type="text" id="editVendorPhone" placeholder="Phone" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-1.5 py-0.5 text-xs dark:text-white">
+          </div>
+        </div>
+
+        <div id="recvQtyFieldGroup" class="hidden">
+          <label class="block text-[9px] font-bold text-emerald-800 dark:text-emerald-400 uppercase mb-0.5">Received Qty</label>
+          <input type="number" id="editQty" class="w-full border border-emerald-300 dark:border-emerald-800 dark:bg-slate-800 dark:text-white rounded-lg px-2 py-1 text-xs font-bold text-slate-900 outline-none" placeholder="Quantity">
+        </div>
+
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Proof Attachment</label>
+          <div class="space-y-1">
+            <div class="flex items-center gap-1.5">
+              <label class="cursor-pointer bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-darkborder px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1">
+                <i data-lucide="upload" class="w-3 h-3 text-indigo-600"></i>
+                <span>Browse</span>
+                <input type="file" id="editFileInput" onchange="handleLocalFileUpload(event)" class="hidden">
+              </label>
+              <span id="fileUploadStatus" class="text-[10px] text-slate-500 truncate flex-1 font-mono">No file</span>
+            </div>
+            <input type="text" id="editAttachment" class="w-full border border-slate-200 dark:border-darkborder dark:bg-slate-800 dark:text-white rounded-lg px-2 py-0.5 text-xs outline-none focus:border-indigo-500 font-mono" placeholder="Or URL link">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Remarks</label>
+          <textarea id="editRemarks" rows="2" class="w-full border border-slate-200 dark:border-darkborder dark:bg-slate-800 dark:text-white rounded-lg p-1.5 text-xs outline-none focus:border-indigo-500" placeholder="Notes..."></textarea>
+        </div>
+
+        <button type="submit" id="btnDoerSave" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 rounded-lg shadow-2xs text-xs flex items-center justify-center gap-1">
+          <span>Save Execution Details</span>
         </button>
-      </div>
+      </form>
+      <div id="doerAlert" class="mt-1.5"></div>
     </div>
   </div>
 
-  <!-- ================= MODAL 3: ADD NEW TASK ================= -->
-  <div class="modal-backdrop" id="modalAddTask">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <h3 class="modal-title">Add New Service Task</h3>
-          <p class="modal-subtitle" id="addTaskSiteLabel">Adding to current site</p>
-        </div>
-        <button class="modal-close-btn" id="btnCloseAddTaskModal" title="Close dialog">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
+  <script>
+    let activeDoers = [];
+    let allData = [];
+    let allVendors = [];
+    let allSitesList = [];
 
-      <div class="modal-body">
-        <div class="form-row">
-          <div class="form-group col-4">
-            <label class="form-label">Task Type:</label>
-            <select id="newTaskType" class="form-control">
-              <option value="task">Actionable Task (with Qty)</option>
-              <option value="header">New Section / Package Header</option>
+    const todayDate = new Date().toISOString().slice(0, 10);
+    document.getElementById('mStartDate').value = todayDate;
+
+    const API_BASE = window.location.origin.startsWith('file:') 
+      ? 'https://pms-central-kini.onrender.com' 
+      : '';
+
+    function naturalWbsSort(a, b) {
+      return (parseInt(a.wbsNo, 10) || 0) - (parseInt(b.wbsNo, 10) || 0);
+    }
+
+    function switchTab(viewId) {
+      document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
+      document.querySelectorAll('.nav-capsule-btn').forEach(b => b.classList.remove('active'));
+
+      document.getElementById(viewId).classList.remove('hidden');
+      const btn = document.getElementById(`tabBtn-${viewId}`);
+      if (btn) btn.classList.add('active');
+
+      if (viewId === 'viewReview') populateReviewPmsSelector();
+      if (viewId === 'viewVendors') renderVendorsView();
+      if (viewId === 'viewSites') loadSitesList();
+      if (viewId === 'viewTeam') renderTeamView();
+    }
+
+    function toggleSideMenu(show) {
+      document.getElementById('sideMenuDrawer').classList.toggle('hidden', !show);
+    }
+
+    function toggleModal(id, show) {
+      document.getElementById(id).classList.toggle('hidden', !show);
+    }
+
+    function initTheme() {
+      const isDark = localStorage.getItem('pms_theme') === 'dark' || 
+        (!('pms_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        document.getElementById('drawerThemeIcon').innerText = '☀️';
+        document.getElementById('drawerThemeLabel').innerText = 'Switch to Day Mode';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('drawerThemeIcon').innerText = '🌙';
+        document.getElementById('drawerThemeLabel').innerText = 'Switch to Dark Mode';
+      }
+      lucide.createIcons();
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('pms_theme', isDark ? 'dark' : 'light');
+      initTheme();
+    }
+
+    function toggleTaskStepsAccordion(cardId) {
+      const body = document.getElementById(`stepsBody-${cardId}`);
+      const icon = document.getElementById(`accIcon-${cardId}`);
+      const btnText = document.getElementById(`accText-${cardId}`);
+
+      if (body.classList.contains('hidden')) {
+        body.classList.remove('hidden');
+        btnText.innerText = 'Hide';
+        icon.style.transform = 'rotate(180deg)';
+      } else {
+        body.classList.add('hidden');
+        btnText.innerText = 'Show';
+        icon.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    function handleRoleSwitch() {
+      const role = document.getElementById('userRole').value;
+      const doerDropdown = document.getElementById('doerDropdownSelect');
+      const banner = document.getElementById('activeDoerBanner');
+
+      if (role === 'DOER') {
+        doerDropdown.classList.remove('hidden');
+        banner.classList.remove('hidden');
+        onDoerUserChange();
+      } else {
+        doerDropdown.classList.add('hidden');
+        banner.classList.add('hidden');
+        applyFilters();
+        populateReviewPmsSelector();
+      }
+    }
+
+    function onDoerUserChange() {
+      const doerSelect = document.getElementById('doerDropdownSelect');
+      const selectedOption = doerSelect.options[doerSelect.selectedIndex];
+      const name = selectedOption ? selectedOption.text : '';
+      document.getElementById('doerBannerName').innerText = name;
+      
+      applyFilters();
+      populateReviewPmsSelector();
+    }
+
+    // ---------------- SITES PANEL MANAGEMENT ----------------
+    async function loadSitesList() {
+      const container = document.getElementById('sitesCardsContainer');
+      container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">Loading sites...</p>';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/sites`);
+        const json = await res.json();
+        if (json.success) {
+          allSitesList = json.data;
+          renderSitesDirectoryCards(allSitesList);
+          renderProjectFilterDropdown();
+        }
+      } catch (err) {
+        container.innerHTML = `<p class="text-xs text-rose-500 py-6 text-center">Error loading sites: ${err.message}</p>`;
+      }
+    }
+
+    function renderSitesDirectoryCards(sites) {
+      const container = document.getElementById('sitesCardsContainer');
+      if (sites.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">No sites recorded.</p>';
+        return;
+      }
+
+      let html = '';
+      sites.forEach(s => {
+        html += `
+          <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1.5 text-xs">
+            <div class="flex items-center justify-between font-bold">
+              <span class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold">📍 ${s.siteName}</span>
+              <div class="flex items-center gap-1">
+                <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}', '${(s.companyName || '').replace(/'/g, "\\'")}', '${(s.projectTitle || '').replace(/'/g, "\\'")}', '${(s.poNumber || '').replace(/'/g, "\\'")}', '${(s.projectOwner || '').replace(/'/g, "\\'")}', '${(s.processCoordinator || '').replace(/'/g, "\\'")}', '${(s.technicalPerson || '').replace(/'/g, "\\'")}', '${(s.purchaserPerson || '').replace(/'/g, "\\'")}', '${(s.vrePerson || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
+                  <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="deleteSite('${s._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5 font-mono">
+              <p><b>Company:</b> ${s.companyName || 'MAHESHWARI DISTRIBUTORS'}</p>
+              ${s.projectTitle ? `<p><b>Project:</b> ${s.projectTitle}</p>` : ''}
+              ${s.poNumber ? `<p><b>PO No:</b> ${s.poNumber}</p>` : ''}
+              <div class="pt-1 text-[9px] text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-darkborder space-y-0.5">
+                <p>⚙️ <b>Coordinator:</b> ${s.processCoordinator || 'N/A'}</p>
+                <p>🛠️ <b>Technical:</b> ${s.technicalPerson || 'N/A'}</p>
+                <p>🛒 <b>Purchaser:</b> ${s.purchaserPerson || 'N/A'}</p>
+                <p>📋 <b>VRE:</b> ${s.vrePerson || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function openSiteModal() {
+      document.getElementById('editSiteId').value = '';
+      document.getElementById('formSiteName').value = '';
+      document.getElementById('formCompanyName').value = 'MAHESHWARI DISTRIBUTORS';
+      document.getElementById('formProjectTitle').value = '';
+      document.getElementById('formPoNumber').value = '';
+      document.getElementById('formProjectOwner').value = '';
+      document.getElementById('formProcCoord').value = 'Tulsi Sen';
+      document.getElementById('formTechPerson').value = 'Heera lal Ji (8003698656)';
+      document.getElementById('formPurchaser').value = 'Ronak Ji (8107688615)';
+      document.getElementById('formVre').value = 'Aarti Bala (8824133320)';
+      document.getElementById('modalSiteTitle').innerText = 'Add New Site / Project';
+      document.getElementById('siteAlert').innerHTML = '';
+      toggleModal('siteModal', true);
+    }
+
+    function openEditSiteModal(id, name, comp, proj, po, owner, coord, tech, pur, vre) {
+      document.getElementById('editSiteId').value = id;
+      document.getElementById('formSiteName').value = name;
+      document.getElementById('formCompanyName').value = comp;
+      document.getElementById('formProjectTitle').value = proj;
+      document.getElementById('formPoNumber').value = po;
+      document.getElementById('formProjectOwner').value = owner;
+      document.getElementById('formProcCoord').value = coord;
+      document.getElementById('formTechPerson').value = tech;
+      document.getElementById('formPurchaser').value = pur;
+      document.getElementById('formVre').value = vre;
+      document.getElementById('modalSiteTitle').innerText = 'Edit Site / Project Details';
+      document.getElementById('siteAlert').innerHTML = '';
+      toggleModal('siteModal', true);
+    }
+
+    async function saveSiteData() {
+      const btn = document.getElementById('btnSaveSite');
+      const id = document.getElementById('editSiteId').value;
+      btn.disabled = true;
+
+      const payload = {
+        siteName: document.getElementById('formSiteName').value.trim(),
+        companyName: document.getElementById('formCompanyName').value.trim(),
+        projectTitle: document.getElementById('formProjectTitle').value.trim(),
+        poNumber: document.getElementById('formPoNumber').value.trim(),
+        projectOwner: document.getElementById('formProjectOwner').value.trim(),
+        processCoordinator: document.getElementById('formProcCoord').value.trim(),
+        technicalPerson: document.getElementById('formTechPerson').value.trim(),
+        purchaserPerson: document.getElementById('formPurchaser').value.trim(),
+        vrePerson: document.getElementById('formVre').value.trim()
+      };
+
+      try {
+        const url = id ? `${API_BASE}/api/sites/${id}` : `${API_BASE}/api/sites`;
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('siteModal', false);
+          loadSitesList();
+          loadDashboardData();
+        } else {
+          document.getElementById('siteAlert').innerHTML = `<div class="p-1 bg-rose-50 text-rose-700 rounded text-[10px]">${json.error}</div>`;
+        }
+      } catch (err) {
+        document.getElementById('siteAlert').innerHTML = `<div class="p-1 bg-rose-50 text-rose-700 rounded text-[10px]">${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteSite(id) {
+      if (!confirm('Are you sure you want to delete this site?')) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/sites/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) {
+          loadSitesList();
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function renderCollapsibleTaskCards(data) {
+      const container = document.getElementById('collapsibleTasksContainer');
+      const role = document.getElementById('userRole').value;
+      const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">No tasks matching current filter.</p>';
+        return;
+      }
+
+      let html = '';
+      const now = new Date();
+
+      data.forEach((item) => {
+        let sortedSteps = [...item.steps].sort(naturalWbsSort);
+
+        if (role === 'DOER' && doerEmail) {
+          sortedSteps = sortedSteps.filter(s => (s.assignedEmail || '').toLowerCase().trim() === doerEmail);
+          if (sortedSteps.length === 0) return;
+        }
+
+        const total = sortedSteps.length;
+        const done = sortedSteps.filter(s => s.status === 'Completed');
+        const delayed = sortedSteps.filter(s => (new Date(s.plannedEndDate) < now && s.status !== 'Completed') || s.status === 'Delayed');
+        const pending = sortedSteps.filter(s => s.status === 'Pending' && !delayed.includes(s));
+
+        const percentage = total > 0 ? Math.round((done.length / total) * 100) : 0;
+        const cardId = item.uniqueId.replace(/[^a-zA-Z0-9]/g, '_');
+
+        html += `
+          <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs overflow-hidden">
+            <div onclick="toggleTaskStepsAccordion('${cardId}')" class="px-3 py-2 cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-darkborder select-none">
+              <div class="flex items-center gap-2">
+                <span class="text-sm">📦</span>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400">${item.uniqueId}</span>
+                    <span class="text-[10px] text-slate-400 font-semibold">(${item.projectName || 'General'})</span>
+                  </div>
+                  <h3 class="text-xs font-bold text-slate-900 dark:text-white leading-tight">${item.mainItemName}</h3>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 text-[9px] font-bold">
+                  <span class="px-1.5 py-0.2 rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200">🟢 ${done.length}</span>
+                  ${delayed.length > 0 ? `<span class="px-1.5 py-0.2 rounded bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 animate-pulse">🚨 ${delayed.length}</span>` : ''}
+                  <span class="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">⚪ ${pending.length}</span>
+                </div>
+
+                <div class="flex items-center gap-2 min-w-[90px]">
+                  <span class="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400">${percentage}%</span>
+                  <div class="w-16 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-emerald-500 h-full rounded-full" style="width: ${percentage}%"></div>
+                  </div>
+                </div>
+
+                <button type="button" class="flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg">
+                  <span id="accText-${cardId}">Show</span>
+                  <svg id="accIcon-${cardId}" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 transition-transform duration-150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+              </div>
+            </div>
+
+            <div id="stepsBody-${cardId}" class="hidden p-2 bg-slate-50/60 dark:bg-slate-900/40 space-y-1">
+              ${sortedSteps.map(s => {
+                const isCompleted = s.status === 'Completed';
+                const isDelayed = (new Date(s.plannedEndDate) < now && !isCompleted) || s.status === 'Delayed';
+                const timer = calculateTimeRemaining(s.plannedEndDate, s.status, s.actualEndDate);
+
+                let dotColor = 'bg-slate-300';
+                if (isCompleted) dotColor = 'bg-emerald-500';
+                else if (isDelayed) dotColor = 'bg-rose-500 animate-pulse';
+                else if (s.status === 'In Progress') dotColor = 'bg-amber-500';
+
+                const v = s.vendorDetails || {};
+
+                return `
+                  <div class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-darkborder bg-white dark:bg-darkcard shadow-2xs flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+                    <div class="flex items-center gap-2 min-w-[200px] flex-1">
+                      <span class="w-2 h-2 rounded-full ${dotColor} shrink-0"></span>
+                      <span class="font-mono font-bold text-indigo-700 dark:text-indigo-400 text-[10px] w-6">#${s.wbsNo}</span>
+                      <span class="font-bold text-slate-800 dark:text-white truncate">${s.stepTitle}</span>
+                    </div>
+
+                    <div class="flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                      <span>👤 ${s.assignedName || s.assignedEmail}</span>
+                      <span>📅 ${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} ➔ ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}</span>
+                      <span class="font-bold ${timer.textClass} px-1.5 py-0.2 rounded">${timer.label}</span>
+                    </div>
+
+                    <button onclick="openDoerModal('${item.uniqueId}', '${s._id}', '${s.stepTitle.replace(/'/g, "\\'")}', '${s.status}', '${s.receivedQty || 0}', '${(s.attachmentUrl || '').replace(/'/g, "\\'")}', '${(s.remarks || '').replace(/'/g, "\\'")}', '${(v.vendorName || '').replace(/'/g, "\\'")}', '${(v.contactPerson || '').replace(/'/g, "\\'")}', '${(v.phone || '').replace(/'/g, "\\'")}', '${(v.poNumber || '').replace(/'/g, "\\'")}')" class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white rounded text-[10px] font-bold border border-indigo-200 dark:border-indigo-900 transition">Edit</button>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html || '<p class="text-xs text-slate-400 py-6 text-center">No tasks assigned to this doer.</p>';
+      lucide.createIcons();
+    }
+
+    function populateReviewPmsSelector() {
+      const select = document.getElementById('reviewPmsSelector');
+      const role = document.getElementById('userRole').value;
+      const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
+
+      if (!allData || allData.length === 0) {
+        select.innerHTML = '<option value="">No PMS available</option>';
+        return;
+      }
+
+      let availableTasks = allData;
+      if (role === 'DOER' && doerEmail) {
+        availableTasks = allData.filter(t => t.steps.some(s => (s.assignedEmail || '').toLowerCase().trim() === doerEmail));
+      }
+
+      if (availableTasks.length === 0) {
+        select.innerHTML = '<option value="">No PMS tasks assigned to this profile</option>';
+        renderSpecificPmsReview();
+        return;
+      }
+
+      let html = '';
+      availableTasks.forEach(t => {
+        html += `<option value="${t.uniqueId}">📦 ${t.uniqueId} - ${t.mainItemName}</option>`;
+      });
+      select.innerHTML = html;
+      renderSpecificPmsReview();
+    }
+
+    function renderSpecificPmsReview() {
+      const selectedId = document.getElementById('reviewPmsSelector').value;
+      const role = document.getElementById('userRole').value;
+      const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
+      const targetTask = allData.find(t => t.uniqueId === selectedId);
+
+      if (!targetTask) {
+        document.getElementById('unifiedStepsBoxContainer').innerHTML = '<p class="text-slate-400 py-6 text-center text-xs">No PMS package selected.</p>';
+        document.getElementById('kpiProgress').innerText = '0%';
+        document.getElementById('kpiCompleted').innerText = '0';
+        document.getElementById('kpiInProgress').innerText = '0';
+        document.getElementById('kpiDelayed').innerText = '0';
+        document.getElementById('kpiPending').innerText = '0';
+        document.getElementById('reviewProgressBar').style.width = '0%';
+        document.getElementById('unifiedTotalBadge').innerText = '0';
+        return;
+      }
+
+      let sortedSteps = [...targetTask.steps].sort(naturalWbsSort);
+
+      if (role === 'DOER' && doerEmail) {
+        sortedSteps = sortedSteps.filter(s => (s.assignedEmail || '').toLowerCase().trim() === doerEmail);
+      }
+
+      const total = sortedSteps.length;
+      const now = new Date();
+
+      const doneSteps = sortedSteps.filter(s => s.status === 'Completed');
+      const delayedSteps = sortedSteps.filter(s => {
+        const isDateOverdue = new Date(s.plannedEndDate) < now && s.status !== 'Completed';
+        return s.status === 'Delayed' || isDateOverdue;
+      });
+      const inProgressSteps = sortedSteps.filter(s => s.status === 'In Progress' && !delayedSteps.includes(s));
+      const pendingSteps = sortedSteps.filter(s => s.status === 'Pending' && !delayedSteps.includes(s));
+
+      const percentage = total > 0 ? Math.round((doneSteps.length / total) * 100) : 0;
+
+      document.getElementById('kpiProgress').innerText = `${percentage}% (${doneSteps.length}/${total})`;
+      document.getElementById('kpiCompleted').innerText = doneSteps.length;
+      document.getElementById('kpiInProgress').innerText = inProgressSteps.length;
+      document.getElementById('kpiDelayed').innerText = delayedSteps.length;
+      document.getElementById('kpiPending').innerText = pendingSteps.length;
+      document.getElementById('reviewProgressBar').style.width = `${percentage}%`;
+      document.getElementById('unifiedTotalBadge').innerText = total;
+
+      const container = document.getElementById('unifiedStepsBoxContainer');
+      let html = '';
+
+      if (sortedSteps.length === 0) {
+        container.innerHTML = '<p class="text-slate-400 py-6 text-center text-xs">No steps assigned to this profile under the selected PMS.</p>';
+        return;
+      }
+
+      sortedSteps.forEach(s => {
+        const isCompleted = s.status === 'Completed';
+        const isDelayed = (new Date(s.plannedEndDate) < now && !isCompleted) || s.status === 'Delayed';
+        const timer = calculateTimeRemaining(s.plannedEndDate, s.status, s.actualEndDate);
+
+        let borderClass = 'border-slate-200 dark:border-darkborder bg-white dark:bg-darkcard';
+        let badgeClass = 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
+        let badgeLabel = s.status;
+
+        if (isCompleted) {
+          borderClass = 'border-emerald-300 dark:border-emerald-900/80 bg-emerald-50/40 dark:bg-slate-800/80';
+          badgeClass = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+          badgeLabel = '✓ Done';
+        } else if (isDelayed) {
+          borderClass = 'border-rose-300 dark:border-rose-900 bg-rose-50/50 dark:bg-rose-950/20';
+          badgeClass = 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200 font-extrabold animate-pulse';
+          badgeLabel = '🚨 Overdue';
+        } else if (s.status === 'In Progress') {
+          borderClass = 'border-amber-300 dark:border-amber-900 bg-amber-50/40 dark:bg-slate-800/80';
+          badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+          badgeLabel = 'Active';
+        }
+
+        const v = s.vendorDetails || {};
+
+        html += `
+          <div class="px-3 py-2 rounded-xl border ${borderClass} shadow-2xs space-y-1">
+            <div class="flex items-center justify-between font-bold">
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-indigo-700 dark:text-indigo-400 text-[10px] w-6">#${s.wbsNo}</span>
+                <span class="text-slate-900 dark:text-white text-xs">${s.stepTitle}</span>
+              </div>
+              <span class="text-[9px] px-1.5 py-0.2 rounded-full font-bold ${badgeClass}">${badgeLabel}</span>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+              <div>📅 ${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} ➔ ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')} (${s.durationDays}d)</div>
+              <div class="font-bold ${timer.textClass} px-1.5 py-0.2 rounded text-[9px]">${timer.label}</div>
+            </div>
+
+            <div class="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-300 pt-1 border-t border-slate-100 dark:border-darkborder/50">
+              <span>👤 <b>${s.assignedName || s.assignedEmail}</b> ${s.actualEndDate ? `<span class="text-emerald-600 font-mono">(${new Date(s.actualEndDate).toLocaleDateString('en-GB')})</span>` : ''}</span>
+              
+              <div class="flex items-center gap-1.5">
+                ${s.attachmentUrl ? `<a href="${s.attachmentUrl}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline font-bold">📎 Proof</a>` : ''}
+                <button onclick="openDoerModal('${targetTask.uniqueId}', '${s._id}', '${s.stepTitle.replace(/'/g, "\\'")}', '${s.status}', '${s.receivedQty || 0}', '${(s.attachmentUrl || '').replace(/'/g, "\\'")}', '${(s.remarks || '').replace(/'/g, "\\'")}', '${(v.vendorName || '').replace(/'/g, "\\'")}', '${(v.contactPerson || '').replace(/'/g, "\\'")}', '${(v.phone || '').replace(/'/g, "\\'")}', '${(v.poNumber || '').replace(/'/g, "\\'")}')" class="px-2 py-0.5 bg-indigo-600 text-white rounded font-bold text-[9px]">Edit</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    async function renderVendorsView() {
+      const container = document.getElementById('vendorCardsContainer');
+      container.innerHTML = '<p class="text-xs text-slate-400 py-3">Fetching vendors...</p>';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/vendors`);
+        const json = await res.json();
+        allVendors = json.data || [];
+        document.getElementById('vendorTotalCountBadge').innerText = `${allVendors.length} Vendors`;
+
+        if (allVendors.length === 0) {
+          container.innerHTML = '<p class="text-xs text-slate-400 py-4">No vendors recorded yet.</p>';
+          return;
+        }
+
+        let html = '';
+        allVendors.forEach(v => {
+          html += `
+            <div class="bg-white dark:bg-darkcard p-2.5 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1 text-xs">
+              <div class="flex items-center justify-between font-bold">
+                <span class="text-amber-700 dark:text-amber-400 font-bold">${v.vendorName}</span>
+                ${v.poNumber ? `<span class="text-[9px] bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono px-1.5 py-0.2 rounded">PO: ${v.poNumber}</span>` : ''}
+              </div>
+              ${v.contactPerson ? `<p class="text-[10px] text-slate-700 dark:text-slate-300">👤 ${v.contactPerson}</p>` : ''}
+              ${v.phone ? `<p class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">📞 ${v.phone}</p>` : ''}
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+        lucide.createIcons();
+      } catch (err) {
+        container.innerHTML = `<p class="text-rose-500 text-xs py-3">${err.message}</p>`;
+      }
+    }
+
+    function renderTeamView() {
+      const container = document.getElementById('teamCardsContainer');
+      if (activeDoers.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 py-4">No team members.</p>';
+        return;
+      }
+
+      let html = '';
+      activeDoers.forEach(d => {
+        html += `
+          <div class="bg-white dark:bg-darkcard p-2.5 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center text-[10px]">
+                ${d.name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 dark:text-white text-xs">${d.name}</h4>
+                <p class="text-[9px] text-slate-400 font-mono">${d.email}</p>
+                <span class="inline-block text-[8px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 px-1 py-0.2 rounded mt-0.5">${d.role || 'Executive'}</span>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-1">
+              <button onclick="openEditDoerModal('${d._id}', '${d.name.replace(/'/g, "\\'")}', '${d.email}', '${(d.role || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1 rounded-md transition" title="Edit Member">
+                <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="removeDoer('${d._id}')" class="text-slate-300 hover:text-rose-600 p-1 rounded-md transition" title="Remove">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function openEditDoerModal(id, name, email, role) {
+      document.getElementById('editDoerId').value = id;
+      document.getElementById('editDoerName').value = name;
+      document.getElementById('editDoerEmail').value = email;
+      document.getElementById('editDoerRole').value = role;
+      document.getElementById('editDoerAlert').innerHTML = '';
+      toggleModal('editDoerModal', true);
+    }
+
+    async function saveEditedDoer() {
+      const btn = document.getElementById('btnSaveEditedDoer');
+      const id = document.getElementById('editDoerId').value;
+      btn.disabled = true;
+
+      const payload = {
+        name: document.getElementById('editDoerName').value.trim(),
+        email: document.getElementById('editDoerEmail').value.trim(),
+        role: document.getElementById('editDoerRole').value.trim()
+      };
+
+      try {
+        const url = id ? `${API_BASE}/api/doers/${id}` : `${API_BASE}/api/doers`;
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('editDoerModal', false);
+          loadDoersList();
+        } else {
+          document.getElementById('editDoerAlert').innerHTML = `<div class="p-1 bg-rose-50 text-rose-700 text-[10px] rounded">${json.error}</div>`;
+        }
+      } catch (err) {
+        document.getElementById('editDoerAlert').innerHTML = `<div class="p-1 bg-rose-50 text-rose-700 text-[10px] rounded">${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function calculateTimeRemaining(targetEndDate, status, actualDoneDate) {
+      if (status === 'Completed') {
+        const doneStr = actualDoneDate ? new Date(actualDoneDate).toLocaleDateString('en-GB') : '';
+        return { label: `✓ Done ${doneStr}`, type: 'completed', textClass: 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800' };
+      }
+
+      const diff = new Date(targetEndDate).getTime() - Date.now();
+      const isPast = diff < 0;
+      const absDiff = Math.abs(diff);
+
+      const days = Math.floor(absDiff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((absDiff / (1000 * 60 * 60)) % 24);
+
+      let formatted = days > 0 ? `${days}d ${hours}h` : `${hours}h`;
+
+      if (isPast) {
+        return {
+          label: `🚨 Overdue ${formatted}`,
+          type: 'overdue',
+          textClass: 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800 font-bold animate-pulse'
+        };
+      } else {
+        return {
+          label: `⏳ Left: ${formatted}`,
+          type: 'active',
+          textClass: days < 2 ? 'text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800 font-bold' : 'text-indigo-800 dark:text-indigo-300 bg-indigo-50/70 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 font-semibold'
+        };
+      }
+    }
+
+    function openDoerModal(taskId, stepId, title, status, qty, attach, remarks, vName = '', vPerson = '', vPhone = '', poNum = '') {
+      document.getElementById('editTaskId').value = taskId;
+      document.getElementById('editStepId').value = stepId;
+      document.getElementById('modalStepTitle').innerText = `${taskId} : ${title}`;
+      document.getElementById('editStatus').value = status;
+      document.getElementById('editQty').value = qty;
+      document.getElementById('editAttachment').value = attach;
+      document.getElementById('editRemarks').value = remarks;
+      
+      document.getElementById('editVendorName').value = vName || '';
+      document.getElementById('editVendorPerson').value = vPerson || '';
+      document.getElementById('editVendorPhone').value = vPhone || '';
+      document.getElementById('editPoNumber').value = poNum || '';
+
+      document.getElementById('fileUploadStatus').innerText = attach ? (attach.startsWith('data:') ? 'Attached' : 'Link') : 'No file';
+      document.getElementById('editFileInput').value = '';
+      document.getElementById('doerAlert').innerHTML = '';
+
+      const targetTask = allData.find(t => t.uniqueId === taskId);
+      let isPreviousCompleted = true;
+
+      if (targetTask) {
+        const sorted = [...targetTask.steps].sort(naturalWbsSort);
+        const idx = sorted.findIndex(s => s._id.toString() === stepId.toString());
+        if (idx > 0) {
+          const prev = sorted[idx - 1];
+          if (prev.status !== 'Completed') {
+            isPreviousCompleted = false;
+          }
+        }
+      }
+
+      const warningBox = document.getElementById('dependencyWarningBox');
+      const optCompleted = document.getElementById('optCompleted');
+
+      if (!isPreviousCompleted && status !== 'Completed') {
+        warningBox.classList.remove('hidden');
+        optCompleted.disabled = true;
+      } else {
+        warningBox.classList.add('hidden');
+        optCompleted.disabled = false;
+      }
+
+      const isPoStep = /(po|vendor|purchase order|procurement)/i.test(title);
+      document.getElementById('vendorFieldGroup').classList.toggle('hidden', !isPoStep);
+
+      const isDeliveryStep = /(delivery|readiness|dispatch|receipt|received|material delivery|clearance)/i.test(title);
+      document.getElementById('recvQtyFieldGroup').classList.toggle('hidden', !isDeliveryStep);
+
+      toggleModal('doerModal', true);
+    }
+
+    function handleLocalFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 15 * 1024 * 1024) {
+        alert('File size exceeds 15 MB.');
+        return;
+      }
+
+      document.getElementById('fileUploadStatus').innerText = `Attached: ${file.name}`;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('editAttachment').value = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function saveDoerExecution() {
+      const btn = document.getElementById('btnDoerSave');
+      btn.disabled = true;
+
+      const payload = {
+        uniqueId: document.getElementById('editTaskId').value,
+        stepId: document.getElementById('editStepId').value,
+        status: document.getElementById('editStatus').value,
+        receivedQty: document.getElementById('editQty').value,
+        attachmentUrl: document.getElementById('editAttachment').value,
+        remarks: document.getElementById('editRemarks').value,
+        vendorDetails: {
+          vendorName: document.getElementById('editVendorName').value.trim(),
+          contactPerson: document.getElementById('editVendorPerson').value.trim(),
+          phone: document.getElementById('editVendorPhone').value.trim(),
+          poNumber: document.getElementById('editPoNumber').value.trim()
+        }
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/pms/update-step`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('doerModal', false);
+          loadDashboardData();
+        } else {
+          document.getElementById('doerAlert').innerHTML = `<div class="p-1 bg-rose-50 text-rose-700 rounded text-[10px] font-bold">${json.error}</div>`;
+        }
+      } catch (err) {
+        document.getElementById('doerAlert').innerHTML = `<div class="p-1 bg-rose-50 text-rose-700 rounded text-[10px] font-bold">${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function loadDoersList() {
+      try {
+        const res = await fetch(`${API_BASE}/api/doers`);
+        const json = await res.json();
+        if (json.success) {
+          activeDoers = json.data;
+          renderDoerFilterDropdown(activeDoers);
+          renderDoerHeaderDropdown(activeDoers);
+          renderTeamView();
+        }
+      } catch (err) {
+        console.error('Error fetching doers:', err);
+      }
+    }
+
+    function renderDoerHeaderDropdown(doers) {
+      const select = document.getElementById('doerDropdownSelect');
+      const currentVal = select.value;
+      let html = '';
+      doers.forEach(d => {
+        html += `<option value="${d.email}">${d.name} (${d.email})</option>`;
+      });
+      select.innerHTML = html;
+      if (currentVal && doers.some(d => d.email === currentVal)) {
+        select.value = currentVal;
+      }
+    }
+
+    function renderDoerFilterDropdown(doers) {
+      const select = document.getElementById('filterByDoer');
+      const current = select.value;
+      let html = '<option value="ALL">All Members</option>';
+      doers.forEach(d => {
+        html += `<option value="${d.name}">${d.name}</option>`;
+      });
+      select.innerHTML = html;
+      select.value = current || 'ALL';
+    }
+
+    async function renderProjectFilterDropdown() {
+      try {
+        const res = await fetch(`${API_BASE}/api/sites`);
+        const json = await res.json();
+        if (json.success) {
+          allSitesList = json.data;
+          const select = document.getElementById('filterByProject');
+          const current = select.value;
+          const datalist = document.getElementById('projectSuggestions');
+
+          let html = '<option value="ALL">All Sites</option>';
+          let dlHtml = '';
+
+          allSitesList.forEach(s => {
+            html += `<option value="${s.siteName}">${s.siteName}</option>`;
+            dlHtml += `<option value="${s.siteName}">`;
+          });
+
+          select.innerHTML = html;
+          datalist.innerHTML = dlHtml;
+          select.value = current || 'ALL';
+        }
+      } catch (err) {
+        console.error('Error fetching sites:', err);
+      }
+    }
+
+    async function removeDoer(id) {
+      if (!confirm('Remove member?')) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/doers/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) {
+          loadDoersList();
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function openCreateModal() {
+      document.getElementById('mStartDate').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('mCompanyName').value = 'MAHESHWARI DISTRIBUTORS';
+      document.getElementById('mProjectTitle').value = '';
+      document.getElementById('mPoNumber').value = '';
+      generateBatchSteps(5);
+      toggleModal('createTaskModal', true);
+    }
+
+    function generateBatchSteps(count) {
+      const num = parseInt(count, 10) || 1;
+      const container = document.getElementById('stepsContainer');
+      container.innerHTML = '';
+
+      const defaultTitles = [
+        "Complete Technicals with approved make submitted to Commercial",
+        "Commercial Offer & Vendor Negotiations",
+        "Offer Evaluation by Technical Team",
+        "Discussion and Negotiation with Vendor",
+        "Management Discussion and Approval",
+        "Issue PO",
+        "Drawings, GA, GTP & other submissions",
+        "Submit Process Engineering Drawing",
+        "Process Engineering Approval & Clearance",
+        "Advance Payment to Vendor as per PO",
+        "Manufacturing / Material Readiness",
+        "Conduct Inspection",
+        "Dispatch Clearance",
+        "Balance Payment to Vendor",
+        "Material Delivery at Site"
+      ];
+
+      for (let i = 1; i <= num; i++) {
+        const title = defaultTitles[i - 1] || `Step #${i}`;
+        const defaultDoer = activeDoers.length > 0 ? activeDoers[(i - 1) % activeDoers.length] : { name: "Heera Lal Ji", email: "heeralal@domain.com" };
+        addStepCard(i, title, defaultDoer.name, defaultDoer.email, 2);
+      }
+      recalculateAllStepDates();
+    }
+
+    function addSingleStepRow() {
+      const container = document.getElementById('stepsContainer');
+      const nextIndex = container.children.length + 1;
+      const defaultDoer = activeDoers[0] || { name: "Heera Lal Ji", email: "heeralal@domain.com" };
+      addStepCard(nextIndex, `Step #${nextIndex}`, defaultDoer.name, defaultDoer.email, 2);
+      recalculateAllStepDates();
+    }
+
+    function addStepCard(wbs, title, doerName, doerEmail, durationDays) {
+      const container = document.getElementById('stepsContainer');
+      const row = document.createElement('div');
+      row.className = 'step-card bg-white dark:bg-darkcard p-2 rounded-lg border border-slate-200 dark:border-darkborder shadow-2xs space-y-1.5 relative';
+
+      let doerOptions = '';
+      activeDoers.forEach(d => {
+        const sel = (d.name === doerName || d.email === doerEmail) ? 'selected' : '';
+        doerOptions += `<option value="${d.name}" data-email="${d.email}" ${sel}>${d.name}</option>`;
+      });
+      doerOptions += `<option value="Custom" data-email="">+ Custom</option>`;
+
+      row.innerHTML = `
+        <div class="flex items-center justify-between pb-0.5 border-b border-slate-100 dark:border-darkborder">
+          <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200">#${wbs}</span>
+          <button type="button" onclick="this.closest('.step-card').remove(); renumberAndRecalculate();" class="text-rose-400 hover:text-rose-600 text-[10px]">
+            <i data-lucide="trash-2" class="w-3 h-3"></i>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5">
+          <div class="md:col-span-2">
+            <input type="text" class="step-wbs w-full border border-slate-200 dark:border-darkborder dark:bg-slate-800 dark:text-white rounded px-1.5 py-0.5 text-xs font-mono font-bold" value="${wbs}">
+          </div>
+          <div class="md:col-span-10">
+            <input type="text" class="step-title w-full border border-slate-200 dark:border-darkborder dark:bg-slate-800 dark:text-white rounded px-2 py-0.5 text-xs font-medium" placeholder="Title" value="${title}">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 bg-slate-50 dark:bg-slate-800/80 p-1 rounded items-center">
+          <div class="md:col-span-4">
+            <select onchange="onDoerChange(this)" class="step-doer-select w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-1.5 py-0.5 text-[11px] font-semibold dark:text-white">
+              ${doerOptions}
             </select>
           </div>
-          <div class="form-group col-4" id="sectionSelectGroup">
-            <label class="form-label">Add Under Section:</label>
-            <select id="newTaskParentSection" class="form-control">
-              <option value="">(At End of List)</option>
-            </select>
+          <div class="md:col-span-4">
+            <input type="email" class="step-email w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-1.5 py-0.5 text-[10px] font-mono text-slate-600 dark:text-slate-300" placeholder="Email" value="${doerEmail}">
           </div>
-          <div class="form-group col-4">
-            <label class="form-label">Unique ID *:</label>
-            <input type="text" id="newTaskUID" class="form-control" placeholder="e.g. RDMS00102">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group col-12">
-            <label class="form-label">WBS Code:</label>
-            <input type="text" id="newTaskWBS" class="form-control" placeholder="e.g. 1.2 or 3 b">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Task Title / Work Description *:</label>
-          <textarea id="newTaskTitle" class="form-control" rows="2" placeholder="e.g. Laying and terminating 11kV 3cx300sqmm Cable..."></textarea>
-        </div>
-
-        <div class="form-row" id="qtyUomSection">
-          <div class="form-group col-4">
-            <label class="form-label">Total Scope Qty:</label>
-            <input type="number" step="any" min="0" id="newTaskTotalQty" class="form-control" placeholder="e.g. 5">
-          </div>
-          <div class="form-group col-4">
-            <label class="form-label">Completed Qty:</label>
-            <input type="number" step="any" min="0" id="newTaskCompletedQty" class="form-control" placeholder="e.g. 0">
-          </div>
-          <div class="form-group col-4">
-            <label class="form-label">UOM (Unit of Measure):</label>
-            <input type="text" id="newTaskUOM" class="form-control" placeholder="e.g. Mtr, Nos, Set, LS">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group col-6">
-            <label class="form-label">Assigned Doer / Work Incharge:</label>
-            <input type="text" id="newTaskDoer" class="form-control" placeholder="e.g. Dinesh Purohit">
-          </div>
-          <div class="form-group col-6">
-            <label class="form-label">Duration (Days):</label>
-            <input type="number" min="1" id="newTaskDuration" class="form-control" placeholder="e.g. 15">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group col-6">
-            <label class="form-label">Planned Start Date:</label>
-            <input type="date" id="newTaskStartDate" class="form-control">
-          </div>
-          <div class="form-group col-6">
-            <label class="form-label">Planned End Date:</label>
-            <input type="date" id="newTaskEndDate" class="form-control">
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary-outline" id="btnCancelAddTaskModal">Cancel</button>
-        <button class="btn btn-primary" id="btnSubmitAddTask">
-          <i class="fa-solid fa-plus"></i> Add Task
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= MODAL 4: BULK ADD TASKS (EXCEL PASTE / IMPORT) ================= -->
-  <div class="modal-backdrop" id="modalBulkAddTasks">
-    <div class="modal-card modal-card-xl">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <h3 class="modal-title">Bulk Add / Import Service Tasks</h3>
-          <p class="modal-subtitle" id="bulkAddSiteLabel">Ek sath multiple tasks Excel/Sheets se copy-paste karein ya fast table me type karein</p>
-        </div>
-        <button class="modal-close-btn" id="btnCloseBulkAddModal" type="button" onclick="closeBulkAddTasksModal()" title="Close dialog">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <!-- Mode Tabs: Direct Paste vs Dynamic Spreadsheet Grid -->
-        <div class="bulk-nav-tabs">
-          <button class="bulk-tab-btn active" id="tabBtnBulkPaste">
-            <i class="fa-solid fa-paste"></i> Quick Copy-Paste (Google Sheet / Excel)
-          </button>
-          <button class="bulk-tab-btn" id="tabBtnBulkTable">
-            <i class="fa-solid fa-table-cells"></i> Multi-Row Interactive Table
-          </button>
-          <button class="bulk-tab-btn" id="tabBtnBulkFile">
-            <i class="fa-solid fa-file-arrow-up"></i> Upload Excel (.xlsx)
-          </button>
-        </div>
-
-        <!-- TAB 1: QUICK COPY-PASTE FROM GOOGLE SHEET / EXCEL -->
-        <div class="bulk-tab-content" id="bulkTabContentPaste">
-          <div class="bulk-guide-card">
-            <div class="guide-header">
-              <i class="fa-solid fa-lightbulb text-amber"></i>
-              <strong>Google Sheet / Excel se directly Copy-Paste karein:</strong>
+          <div class="md:col-span-4 flex items-center gap-1">
+            <input type="number" min="1" value="${durationDays || 2}" oninput="recalculateAllStepDates()" class="step-days w-12 bg-white dark:bg-darkcard border border-amber-200 dark:border-amber-800 rounded px-1 py-0.5 text-xs font-bold text-center dark:text-white">
+            <span class="text-[9px] text-slate-400 font-bold">d</span>
+            <div class="step-date-preview text-[9px] font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-darkcard border border-emerald-200 dark:border-emerald-800 px-1 py-0.5 rounded text-center flex-1 font-mono truncate">
+              Auto...
             </div>
-            <p class="guide-text">
-              Sheet se rows select karke <strong>Ctrl + C</strong> karein aur neeche box me <strong>Ctrl + V</strong> paste kar dein. Columns ka format:
-              <code>WBS / S.No &nbsp;|&nbsp; Work Description / Title &nbsp;|&nbsp; Doer &nbsp;|&nbsp; Duration (Days) &nbsp;|&nbsp; Start Date &nbsp;|&nbsp; End Date</code>
-              ya sirf <code>Work Description / Title</code>. System automatically sabhi rows ko tasks me convert kar lega!
-            </p>
-          </div>
-
-          <div class="form-group">
-            <div class="paste-textarea-header">
-              <label class="form-label">Paste Excel / Sheets Data Here:</label>
-              <button type="button" class="btn-link-xs" id="btnLoadSamplePaste">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Load Leaky Feeder Example Rows
-              </button>
-            </div>
-            <textarea id="bulkPasteInput" class="form-control bulk-textarea" rows="7" placeholder="Paste copied rows from Google Sheets / Excel here...
-Example:
-6	Shifting of OFC cable and LAN cable in underground (6000 MTR)	Ashok Menariya	10	2025-04-21	2026-03-30
-7	Laying of OFC cable and LAN cable in underground at proper height	Ashok Menariya	11	2025-04-25	2026-03-30
-8	Splicing of OFC cable	Ashok Menariya	12	2025-04-29	2026-03-30
-9	Crimping of LAN cable	Ashok Menariya	13	2025-05-03	2026-03-30"></textarea>
-          </div>
-
-          <!-- Common Defaults for Pasted Items -->
-          <div class="bulk-defaults-box">
-            <span class="defaults-title"><i class="fa-solid fa-sliders"></i> Default settings for imported rows:</span>
-            <div class="form-row">
-              <div class="form-group col-4">
-                <label class="form-label">Default Doer / Incharge</label>
-                <input type="text" id="bulkDefaultDoer" class="form-control" placeholder="Ashok Menariya">
-              </div>
-              <div class="form-group col-4">
-                <label class="form-label">Default Scope Qty</label>
-                <input type="number" id="bulkDefaultQty" class="form-control" value="1">
-              </div>
-              <div class="form-group col-4">
-                <label class="form-label">Default UOM</label>
-                <input type="text" id="bulkDefaultUOM" class="form-control" value="Mtr">
-              </div>
-            </div>
-          </div>
-
-          <div class="paste-action-bar">
-            <button class="btn btn-emerald" id="btnParsePastedRows" type="button" onclick="parsePastedRows()">
-              <i class="fa-solid fa-arrows-rotate"></i> Parse & Preview Rows
-            </button>
-            <span class="preview-count-badge" id="parsedCountBadge" style="display:none;">0 rows detected</span>
+            <input type="hidden" class="step-start-hidden">
+            <input type="hidden" class="step-end-hidden">
           </div>
         </div>
+      `;
 
-        <!-- TAB 2: INTERACTIVE MULTI-ROW SPREADSHEET TABLE -->
-        <div class="bulk-tab-content" id="bulkTabContentTable" style="display: none;">
-          <div class="bulk-table-toolbar">
-            <div class="toolbar-left">
-              <button class="btn btn-white btn-sm" id="btnAddGridRow">
-                <i class="fa-solid fa-plus text-emerald"></i> + Add 1 Row
-              </button>
-              <button class="btn btn-white btn-sm" id="btnAddGrid5Rows">
-                <i class="fa-solid fa-plus-minus text-primary"></i> + Add 5 Rows
-              </button>
-              <button class="btn btn-white btn-sm text-danger" id="btnClearGridRows">
-                <i class="fa-solid fa-trash-can"></i> Clear All
-              </button>
-            </div>
-            <span class="row-counter-text" id="gridRowCountText">Showing 5 rows</span>
-          </div>
+      container.appendChild(row);
+      lucide.createIcons();
+    }
 
-          <div class="bulk-grid-scroll-wrap">
-            <table class="bulk-grid-table">
-              <thead>
-                <tr>
-                  <th style="width: 40px;">#</th>
-                  <th style="width: 80px;">WBS</th>
-                  <th style="min-width: 260px;">Task Title / Description *</th>
-                  <th style="width: 140px;">Doer</th>
-                  <th style="width: 75px;">Qty</th>
-                  <th style="width: 75px;">UOM</th>
-                  <th style="width: 75px;">Days</th>
-                  <th style="width: 125px;">Start Date</th>
-                  <th style="width: 125px;">End Date</th>
-                  <th style="width: 40px;"></th>
-                </tr>
-              </thead>
-              <tbody id="bulkGridTableBody">
-                <!-- Dynamically populated rows -->
-              </tbody>
-            </table>
-          </div>
-        </div>
+    function onDoerChange(selectElem) {
+      const selectedOption = selectElem.options[selectElem.selectedIndex];
+      const email = selectedOption.getAttribute('data-email');
+      const card = selectElem.closest('.step-card');
+      const emailInput = card.querySelector('.step-email');
+      if (email) emailInput.value = email;
+      else { emailInput.value = ''; emailInput.focus(); }
+    }
 
-        <!-- TAB 3: FILE UPLOAD (.XLSX) -->
-        <div class="bulk-tab-content" id="bulkTabContentFile" style="display: none;">
-          <div class="bulk-upload-dropzone" id="bulkFileDropzone">
-            <i class="fa-solid fa-file-excel dropzone-icon"></i>
-            <h4>Drag & Drop Excel (.xlsx) file here</h4>
-            <p>Ya apne computer se Excel file select karein</p>
-            <input type="file" id="bulkFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
-            <button type="button" class="btn btn-primary" id="btnBrowseBulkFile">
-              <i class="fa-solid fa-folder-open"></i> Choose File
-            </button>
-            <span class="file-name-indicator" id="bulkFileNameIndicator"></span>
-          </div>
-        </div>
+    function recalculateAllStepDates() {
+      const baseStartVal = document.getElementById('mStartDate').value;
+      if (!baseStartVal) return;
 
-        <!-- PREVIEW BOX (Shown for parsed items) -->
-        <div class="bulk-preview-container" id="bulkPreviewContainer" style="display: none;">
-          <div class="preview-header-bar">
-            <span><i class="fa-solid fa-list-check text-primary"></i> <strong>Tasks to be added (<span id="bulkTasksReadyCount">0</span>)</strong></span>
-            <button type="button" class="btn-link-xs text-danger" id="btnDiscardPreview">Discard</button>
-          </div>
-          <div class="preview-items-list" id="bulkPreviewItemsList"></div>
-        </div>
-      </div>
+      let currentCursor = new Date(baseStartVal + 'T09:00:00');
+      const cards = document.querySelectorAll('#stepsContainer .step-card');
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary-outline" id="btnCancelBulkAddModal">Cancel</button>
-        <button class="btn btn-primary" id="btnSubmitBulkTasks" type="button" onclick="submitBulkTasks()">
-          <i class="fa-solid fa-cloud-arrow-up"></i> <span id="btnSubmitBulkText">Add All Tasks to Site</span>
-        </button>
-      </div>
-    </div>
-  </div>
+      cards.forEach((card) => {
+        const daysInput = card.querySelector('.step-days');
+        const days = Math.max(1, parseInt(daysInput.value, 10) || 1);
 
-  <!-- ================= MODAL 5: GOOGLE SHEETS REAL-TIME SYNC CONFIG ================= -->
-  <div class="modal-backdrop" id="modalSheetsSync">
-    <div class="modal-card" style="max-width: 650px;">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <h3 class="modal-title"><i class="fa-solid fa-file-waveform text-emerald"></i> Google Sheets Auto-Sync Setup</h3>
-          <p class="modal-subtitle">Supply PMS DB Google Sheet me real-time automatic entries bhejne ke liye Web App URL set karein</p>
-        </div>
-        <button class="modal-close-btn" id="btnCloseSheetsModal" title="Close dialog">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
+        const stepStart = new Date(currentCursor);
+        const stepEnd = new Date(stepStart);
+        stepEnd.setDate(stepEnd.getDate() + days);
 
-      <div class="modal-body">
-        <div class="bulk-guide-card">
-          <div class="guide-header">
-            <i class="fa-solid fa-circle-check text-emerald"></i>
-            <strong>Real-time Auto Logging Activated</strong>
-          </div>
-          <p class="guide-text">
-            Jab bhi aap <strong>Project Details save</strong> karenge, <strong>Task progress update</strong> karenge, ya <strong>New Tasks add</strong> karenge, Google Apps Script webhook ke zariye aapki Google Sheet (<strong>Supply PMS DB</strong>) me exact row real-time me append ho jaayegi!
-          </p>
-        </div>
+        card.querySelector('.step-start-hidden').value = stepStart.toISOString();
+        card.querySelector('.step-end-hidden').value = stepEnd.toISOString();
 
-        <div class="form-group">
-          <label class="form-label">Google Apps Script Web App URL *</label>
-          <input type="url" id="inputSheetsWebhookUrl" class="form-control" placeholder="https://script.google.com/macros/s/.../exec">
-          <span style="font-size: 0.74rem; color: #64748b; margin-top: 3px;">
-            Google Sheets me <code>Extensions &gt; Apps Script &gt; Deploy &gt; Web app</code> se mila hua URL yahan paste karein.
-          </span>
-        </div>
+        const sStr = stepStart.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        const eStr = stepEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        card.querySelector('.step-date-preview').innerText = `${sStr}➔${eStr}`;
 
-        <div class="form-section-card">
-          <div class="section-card-title">
-            <i class="fa-solid fa-table-columns"></i> Google Sheet Columns Mapping (Row 1)
-          </div>
-          <p style="font-size: 0.75rem; color: #475569; margin: 0; line-height: 1.4;">
-            Aapki Sheet1 me Row 1 headers: <code>A: Unique ID</code> | <code>B: Timestamp</code> | <code>C: Project Name</code> | <code>D: Action / Activity</code> | <code>E: PO Number</code> | <code>F: Client</code> | <code>G: Stakeholders</code> | <code>H: Status</code> | <code>I: Updated By</code>
-          </p>
-        </div>
+        currentCursor = new Date(stepEnd);
+      });
+    }
 
-        <div class="sync-test-box">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button type="button" class="btn btn-emerald-secondary btn-sm" id="btnTestSheetsSync">
-              <i class="fa-solid fa-paper-plane"></i> Send Test Entry to Google Sheet
-            </button>
-            <span class="sync-status-badge" id="syncStatusBadge">Ready</span>
-          </div>
-        </div>
-      </div>
+    function renumberAndRecalculate() {
+      const cards = document.querySelectorAll('#stepsContainer .step-card');
+      cards.forEach((c, i) => {
+        const idx = i + 1;
+        c.querySelector('.step-wbs').value = idx;
+      });
+      recalculateAllStepDates();
+    }
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary-outline" id="btnCancelSheetsModal">Cancel</button>
-        <button class="btn btn-primary" id="btnSaveSheetsConfig">
-          <i class="fa-solid fa-check"></i> Save & Enable Auto-Sync
-        </button>
-      </div>
-    </div>
-  </div>
+    async function submitFullTaskPackage() {
+      const btn = document.getElementById('btnSaveFullTask');
+      btn.disabled = true;
 
-  <!-- ================= MODAL: EDIT TASK ================= -->
-  <div class="modal-backdrop" id="modalEditTask">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <h3 class="modal-title">Edit Task</h3>
-          <p class="modal-subtitle" id="editTaskSubtitle">Modify task details below</p>
-        </div>
-        <button class="modal-close-btn" id="btnCloseEditTaskModal" title="Close">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
+      const cards = document.querySelectorAll('#stepsContainer .step-card');
+      if (cards.length === 0) {
+        alert('Please add at least 1 step.');
+        btn.disabled = false;
+        return;
+      }
 
-      <div class="modal-body">
-        <input type="hidden" id="editTaskId">
+      const stepsData = [];
+      cards.forEach(c => {
+        stepsData.push({
+          wbsNo: c.querySelector('.step-wbs').value,
+          stepTitle: c.querySelector('.step-title').value,
+          assignedName: c.querySelector('.step-doer-select').value,
+          assignedEmail: c.querySelector('.step-email').value,
+          durationDays: c.querySelector('.step-days').value,
+          plannedStartDate: c.querySelector('.step-start-hidden').value,
+          plannedEndDate: c.querySelector('.step-end-hidden').value
+        });
+      });
 
-        <div class="form-row">
-          <div class="form-group col-6">
-            <label class="form-label">WBS / Step No.</label>
-            <input type="text" id="editTaskWbs" class="form-control" placeholder="e.g. 1a">
-          </div>
-          <div class="form-group col-6">
-            <label class="form-label">Task Type</label>
-            <select id="editTaskType" class="form-control">
-              <option value="task">Normal Task</option>
-              <option value="header">Section Header</option>
-            </select>
-          </div>
-        </div>
+      const projectNameVal = document.getElementById('mProject').value.trim();
 
-        <div class="form-group">
-          <label class="form-label">Action / Step Description <span class="text-danger">*</span></label>
-          <textarea id="editTaskTitle" class="form-control" rows="2" placeholder="Describe the task..."></textarea>
-        </div>
+      const payload = {
+        projectName: projectNameVal,
+        mainItemName: document.getElementById('mItemName').value,
+        pmsType: document.getElementById('mType').value,
+        startDate: document.getElementById('mStartDate').value,
+        totalQty: document.getElementById('mQty').value,
+        steps: stepsData
+      };
 
-        <div class="form-row" id="editQtySection">
-          <div class="form-group col-4">
-            <label class="form-label">Total Qty</label>
-            <input type="number" id="editTaskTotalQty" class="form-control" placeholder="e.g. 10">
-          </div>
-          <div class="form-group col-4">
-            <label class="form-label">Completed Qty</label>
-            <input type="number" id="editTaskCompletedQty" class="form-control" placeholder="e.g. 5">
-          </div>
-          <div class="form-group col-4">
-            <label class="form-label">Unit (UOM)</label>
-            <input type="text" id="editTaskUom" class="form-control" placeholder="e.g. LS, Mtr, Nos">
-          </div>
-        </div>
+      try {
+        const res = await fetch(`${API_BASE}/api/pms/create-custom-package`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('createTaskModal', false);
+          loadDashboardData();
+        } else {
+          alert(json.error);
+        }
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
 
-        <!-- Progress % Override -->
-        <div class="form-row" id="editProgressSection">
-          <div class="form-group col-6">
-            <label class="form-label">
-              <i class="fa-solid fa-percent" style="color:#6366f1;"></i>
-              Progress % <span class="form-hint">Auto-calculated from qty. Override manually if needed.</span>
-            </label>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <input type="range" id="editTaskProgressPct" min="0" max="100" step="1" value="0"
-                style="flex:1; accent-color:#6366f1;"
-                oninput="document.getElementById('editProgressPctDisplay').textContent = this.value + '%'">
-              <span id="editProgressPctDisplay" style="font-weight:700; color:#6366f1; min-width:42px; text-align:right;">0%</span>
-            </div>
-          </div>
-          <div class="form-group col-6" style="display:flex; align-items:flex-end; padding-bottom:4px;">
-            <div style="font-size:0.78rem; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px; line-height:1.5;">
-              <i class="fa-solid fa-circle-info" style="color:#6366f1;"></i>
-              <strong>0%</strong> = Pending &nbsp;|&nbsp; <strong>1–99%</strong> = In Progress &nbsp;|&nbsp; <strong>100%</strong> = Completed
-            </div>
-          </div>
-        </div>
+    async function loadDashboardData() {
+      try {
+        const res = await fetch(`${API_BASE}/api/pms/all`);
+        const json = await res.json();
 
-        <div class="form-row">
-          <div class="form-group col-6">
-            <label class="form-label">Doer / Incharge</label>
-            <input type="text" id="editTaskDoer" class="form-control" placeholder="Name of responsible person">
-          </div>
-          <div class="form-group col-6">
-            <label class="form-label">Manpower</label>
-            <input type="text" id="editTaskManpower" class="form-control" placeholder="e.g. 10 workers">
-          </div>
-        </div>
+        if (!json.success || json.data.length === 0) {
+          document.getElementById('collapsibleTasksContainer').innerHTML = '<p class="text-center py-6 text-slate-400 text-xs">No tasks found. Click "+ Task" to begin.</p>';
+          return;
+        }
 
-        <div class="form-row">
-          <div class="form-group col-6">
-            <label class="form-label">Start Date</label>
-            <input type="date" id="editTaskStartDate" class="form-control">
-          </div>
-          <div class="form-group col-6">
-            <label class="form-label">End Date</label>
-            <input type="date" id="editTaskEndDate" class="form-control">
-          </div>
-        </div>
+        allData = json.data;
+        renderProjectFilterDropdown();
+        applyFilters();
+        populateReviewPmsSelector();
+      } catch (err) {
+        document.getElementById('collapsibleTasksContainer').innerHTML = `<p class="text-center py-6 text-rose-500 text-xs font-semibold">Error: ${err.message}</p>`;
+      }
+    }
 
-        <div class="form-group">
-          <label class="form-label">Remarks</label>
-          <textarea id="editTaskRemark" class="form-control" rows="2" placeholder="Optional remarks or notes..."></textarea>
-        </div>
-      </div>
+    function applyFilters() {
+      const role = document.getElementById('userRole').value;
+      const doerDropdownEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
+      const selectedSite = document.getElementById('filterByProject').value;
+      const selectedDoer = document.getElementById('filterByDoer').value;
+      const search = document.getElementById('searchInput').value.toLowerCase();
 
-      <div class="modal-footer">
-        <button class="btn btn-light" id="btnCancelEditTaskModal">Cancel</button>
-        <button class="btn btn-primary" id="btnSaveEditTask">
-          <i class="fa-solid fa-check"></i> Save Changes
-        </button>
-      </div>
-    </div>
-  </div>
+      let filtered = allData;
 
-  <script src="app.js?v=8"></script>
+      if (role === 'DOER' && doerDropdownEmail) {
+        filtered = filtered.filter(t => t.steps.some(s => (s.assignedEmail || '').toLowerCase().trim() === doerDropdownEmail));
+      } else {
+        if (selectedSite !== 'ALL') {
+          filtered = filtered.filter(t => (t.projectName || '').toLowerCase() === selectedSite.toLowerCase());
+        }
+        if (selectedDoer !== 'ALL') {
+          filtered = filtered.filter(t => t.steps.some(s => s.assignedName && s.assignedName.toLowerCase().includes(selectedDoer.toLowerCase())));
+        }
+      }
+
+      if (search) {
+        filtered = filtered.filter(t => t.mainItemName.toLowerCase().includes(search) || t.uniqueId.toLowerCase().includes(search) || t.steps.some(s => s.stepTitle.toLowerCase().includes(search)));
+      }
+
+      renderCollapsibleTaskCards(filtered);
+    }
+
+    function exportToCSV() {
+      if (!allData || allData.length === 0) {
+        alert('No data available.');
+        return;
+      }
+
+      let csv = 'Project Site,Task ID,Main Task,WBS,Step Title,Owner,Vendor,PO Number,Start Date,End Date,Completion Date,Duration Days,Qty,Status,Remarks\n';
+
+      allData.forEach(item => {
+        const sortedSteps = [...item.steps].sort(naturalWbsSort);
+        sortedSteps.forEach(s => {
+          const v = s.vendorDetails || {};
+          const compDate = s.actualEndDate ? new Date(s.actualEndDate).toLocaleDateString('en-GB') : '';
+          csv += `"${item.projectName || ''}","${item.uniqueId}","${item.mainItemName.replace(/"/g, '""')}","${s.wbsNo}","${s.stepTitle.replace(/"/g, '""')}","${s.assignedName || ''}","${v.vendorName || ''}","${v.poNumber || ''}","${new Date(s.plannedStartDate).toLocaleDateString('en-GB')}","${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}","${compDate}","${s.durationDays}","${s.receivedQty || 0}","${s.status}","${(s.remarks || '').replace(/"/g, '""')}"\n`;
+        });
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PMS_Execution_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    initTheme();
+    loadSitesList();
+    loadDoersList();
+    loadDashboardData();
+    lucide.createIcons();
+  </script>
 </body>
 </html>
