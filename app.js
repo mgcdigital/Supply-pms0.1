@@ -28,8 +28,8 @@ function parseAnyDate(str) {
 ﻿// Service PMS Application Logic
 
 // Local storage key
-const STORAGE_KEY = 'SERVICE_PMS_DATA_V5';
-const ROLE_STORAGE_KEY = 'SERVICE_PMS_USER_ROLE';
+const STORAGE_KEY = 'SUPPLY_PMS_DATA_V1';
+const ROLE_STORAGE_KEY = 'SUPPLY_PMS_USER_ROLE';
 
 // Initial state
 let sitesData = [];
