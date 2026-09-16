@@ -20,15 +20,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function setupRoleBadges() {
+  const doerBadge = document.querySelector('.role-badge.doer');
   const adminBadge = document.querySelector('.role-badge.admin');
   const superAdminBadge = document.querySelector('.role-badge.super-admin');
 
   function updateRoleUI() {
+    if (doerBadge) doerBadge.classList.toggle('active', currentUserRole === 'Doer');
     if (adminBadge) adminBadge.classList.toggle('active', currentUserRole === 'Admin');
     if (superAdminBadge) superAdminBadge.classList.toggle('active', currentUserRole === 'Super Admin');
   }
 
   updateRoleUI();
+
+  if (doerBadge) {
+    doerBadge.addEventListener('click', () => {
+      currentUserRole = 'Doer';
+      localStorage.setItem(ROLE_STORAGE_KEY, currentUserRole);
+      updateRoleUI();
+      if (activeSiteId) renderSiteTasks();
+    });
+  }
 
   if (adminBadge) {
     adminBadge.addEventListener('click', () => {
@@ -83,6 +94,30 @@ function deleteTask(taskId) {
 }
 
 // Load Data from LocalStorage or seed_data.json
+
+// MongoDB API sync helper
+let isMongoOnline = false;
+
+function updateDbBadge(status, text) {
+  const dot = document.getElementById('dbStatusDot');
+  const label = document.getElementById('dbStatusText');
+  if (!dot || !label) return;
+
+  if (status === 'connected') {
+    dot.style.background = '#22c55e'; // Green
+    label.textContent = text || 'MongoDB: Live';
+    label.style.color = '#86efac';
+  } else if (status === 'syncing') {
+    dot.style.background = '#38bdf8'; // Sky blue
+    label.textContent = text || 'MongoDB: Syncing...';
+    label.style.color = '#bae6fd';
+  } else {
+    dot.style.background = '#f59e0b'; // Amber / fallback
+    label.textContent = text || 'Storage: Local Fallback';
+    label.style.color = '#fde68a';
+  }
+}
+
 async function loadData() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
@@ -286,7 +321,36 @@ function addInitialDemoSites() {
 
 // Save Data to LocalStorage
 function saveData() {
+  // Always update LocalStorage immediately for instant UI responsiveness
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sitesData));
+
+  // Background sync to MongoDB API
+  syncToMongoBackend();
+}
+
+let syncTimeout = null;
+function syncToMongoBackend() {
+  if (syncTimeout) clearTimeout(syncTimeout);
+  // Debounce sync slightly to batch rapid edits
+  syncTimeout = setTimeout(async () => {
+    try {
+      updateDbBadge('syncing', 'MongoDB: Saving...');
+      const res = await fetch('/api/sites', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sitesData)
+      });
+      if (res.ok) {
+        isMongoOnline = true;
+        updateDbBadge('connected', 'MongoDB: Live');
+      } else {
+        updateDbBadge('offline', 'Storage: Local (Offline)');
+      }
+    } catch (e) {
+      console.warn('Background MongoDB sync skipped/failed:', e.message);
+      updateDbBadge('offline', 'Storage: Local (Offline)');
+    }
+  }, 400);
 }
 
 // Calculate site stats
@@ -680,9 +744,11 @@ function renderSiteTasks() {
     const tr = document.createElement('tr');
 
     // If it's a section header row (e.g. WBS Category)
-        if (task.isHeader) {
+            if (task.isHeader) {
       tr.className = 'header-row';
-      const sectionActionHtml = `<div class="action-buttons-cell"><button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit Section"><i class="fa-solid fa-pen"></i></button></div>`;
+      const sectionActionHtml = (currentUserRole !== 'Doer') 
+        ? `<div class="action-buttons-cell"><button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit Section"><i class="fa-solid fa-pen"></i></button></div>`
+        : '';
       tr.innerHTML = `
         ${currentUserRole === 'Super Admin' ? `<td class="td-checkbox"><input type="checkbox" class="row-checkbox" data-id="${task.id}" onchange="onRowCheckboxChange(this)"></td>` : ''}
         <td class="uid-cell">
@@ -766,16 +832,21 @@ function renderSiteTasks() {
 
 // Render Action column based on user role (Super Admin vs Admin/Normal User)
 function renderTaskActionColumn(task) {
-  // Both Super Admin and Admin get: Mark Done + Edit
-  // Delete is handled via Bulk Delete only (Super Admin only, via checkboxes)
+  // Doer only gets Mark Done (Checkmark) button. Pencil/Edit is hidden for Doer.
+  // Super Admin and Admin get both: Mark Done + Edit Pencil.
+  const isDoer = (currentUserRole === 'Doer');
+  const editBtnHtml = !isDoer ? `
+    <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit task details">
+      <i class="fa-solid fa-pen"></i>
+    </button>
+  ` : '';
+
   return `
     <div class="action-buttons-cell">
       <button class="btn-icon-done" onclick="openUpdateModal('${task.id}')" title="Mark as Done / Update Progress">
         <i class="fa-solid fa-circle-check"></i>
       </button>
-      <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit task details">
-        <i class="fa-solid fa-pen"></i>
-      </button>
+      ${editBtnHtml}
     </div>
   `;
 }
@@ -813,6 +884,10 @@ function deleteSection(sectionId) {
 
 // ================= EDIT TASK MODAL =================
 function openEditTaskModal(taskId) {
+  if (currentUserRole === 'Doer') {
+    alert('Access Denied: Doer cannot edit task configurations.');
+    return;
+  }
   const site = sitesData.find(s => s.id === activeSiteId);
   if (!site) return;
   const task = site.tasks.find(t => t.id === taskId);
@@ -836,11 +911,35 @@ function openEditTaskModal(taskId) {
   const qtySection = document.getElementById('editQtySection');
   if (qtySection) qtySection.style.display = task.isHeader ? 'none' : 'flex';
 
-  document.getElementById('modalEditTask').classList.add('active');
+  // Pre-fill progress % slider + display
+  const editProgressEl = document.getElementById('editTaskProgressPct');
+  const editProgressDisplay = document.getElementById('editProgressPctDisplay');
+  const pctVal = task.progressPct !== undefined ? task.progressPct : 0;
+  if (editProgressEl) editProgressEl.value = pctVal;
+  if (editProgressDisplay) editProgressDisplay.textContent = pctVal + '%';
+
+  // Wire up live qty → progress auto-calc
+  const compQtyInput = document.getElementById('editTaskCompletedQty');
+  const totalQtyInput = document.getElementById('editTaskTotalQty');
+  if (compQtyInput && totalQtyInput) {
+    const syncProgress = () => {
+      const total = parseFloat(totalQtyInput.value) || 0;
+      const done = parseFloat(compQtyInput.value) || 0;
+      if (total > 0) {
+        const pct = Math.min(100, Math.round((done / total) * 100));
+        if (editProgressEl) { editProgressEl.value = pct; }
+        if (editProgressDisplay) editProgressDisplay.textContent = pct + '%';
+      }
+    };
+    compQtyInput.oninput = syncProgress;
+    totalQtyInput.oninput = syncProgress;
+  }
+
+  document.getElementById('modalEditTask').classList.add('open');
 }
 
 function closeEditTaskModal() {
-  document.getElementById('modalEditTask').classList.remove('active');
+  document.getElementById('modalEditTask').classList.remove('open');
 }
 
 function saveEditTask() {
@@ -870,7 +969,13 @@ function saveEditTask() {
     if (!isNaN(total)) task.totalQty = total;
     if (!isNaN(completed)) {
       task.completedQty = completed;
-      task.progressPct = task.totalQty > 0 ? Math.round((completed / task.totalQty) * 100) : 0;
+      // Auto-calculate progress from qty
+      task.progressPct = task.totalQty > 0 ? Math.min(100, Math.round((completed / task.totalQty) * 100)) : 0;
+    }
+    // Allow manual progress override if direct % field is filled
+    const manualPct = document.getElementById('editTaskProgressPct');
+    if (manualPct && manualPct.value !== '' && (isNaN(completed) || document.getElementById('editTaskCompletedQty').value === '')) {
+      task.progressPct = Math.min(100, Math.max(0, parseInt(manualPct.value) || 0));
     }
     // Recalculate duration
     if (task.startDate && task.endDate) {

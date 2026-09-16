@@ -6,3 +6,7 @@ Thumbs.db
 # Node dependencies (if used)
 node_modules/
 npm-debug.log
+
+.env
+.env.local
+

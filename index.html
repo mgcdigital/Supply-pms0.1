@@ -35,6 +35,7 @@
         <i class="fa-solid fa-file-excel"></i> Export Excel Sheet
       </button>
       <div class="role-badge-group">
+        <span class="role-badge doer">Doer</span>
         <span class="role-badge admin">Admin</span>
         <span class="role-badge super-admin active">Super Admin</span>
       </div>
@@ -62,6 +63,10 @@
           </div>
         </div>
         <div class="header-actions">
+          <span id="dbStatusBadge" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1;">
+            <span id="dbStatusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
+            <span id="dbStatusText">MongoDB: Checking...</span>
+          </span>
           <label class="custom-checkbox-label">
             <input type="checkbox" id="chkShowHidden">
             <span class="checkbox-custom"></span>
@@ -936,6 +941,28 @@ Example:
           <div class="form-group col-4">
             <label class="form-label">Unit (UOM)</label>
             <input type="text" id="editTaskUom" class="form-control" placeholder="e.g. LS, Mtr, Nos">
+          </div>
+        </div>
+
+        <!-- Progress % Override -->
+        <div class="form-row" id="editProgressSection">
+          <div class="form-group col-6">
+            <label class="form-label">
+              <i class="fa-solid fa-percent" style="color:#6366f1;"></i>
+              Progress % <span class="form-hint">Auto-calculated from qty. Override manually if needed.</span>
+            </label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="editTaskProgressPct" min="0" max="100" step="1" value="0"
+                style="flex:1; accent-color:#6366f1;"
+                oninput="document.getElementById('editProgressPctDisplay').textContent = this.value + '%'">
+              <span id="editProgressPctDisplay" style="font-weight:700; color:#6366f1; min-width:42px; text-align:right;">0%</span>
+            </div>
+          </div>
+          <div class="form-group col-6" style="display:flex; align-items:flex-end; padding-bottom:4px;">
+            <div style="font-size:0.78rem; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px; line-height:1.5;">
+              <i class="fa-solid fa-circle-info" style="color:#6366f1;"></i>
+              <strong>0%</strong> = Pending &nbsp;|&nbsp; <strong>1–99%</strong> = In Progress &nbsp;|&nbsp; <strong>100%</strong> = Completed
+            </div>
           </div>
         </div>
 
