@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -164,6 +164,56 @@
             <div class="meta-row"><span class="meta-lbl">VRE:</span> <span class="meta-val" id="metaVRE">-</span></div>
             <div class="meta-row"><span class="meta-lbl">SITE INCHARGE:</span> <span class="meta-val" id="metaIncharge">-</span></div>
             <div class="meta-row"><span class="meta-lbl">COORDINATOR:</span> <span class="meta-val" id="metaCoordinator">-</span></div>
+          </div>
+        </div>
+
+        <!-- Buffer Status Bar -->
+        <div class="buffer-status-bar" id="bufferStatusBar" style="display:none;">
+          <div class="buffer-bar-inner">
+            <div class="buffer-pill" id="bufferPillPlan">
+              <i class="fa-solid fa-calendar-days"></i>
+              <span class="bpill-label">Plan</span>
+              <span class="bpill-val" id="bufferValPlan">-</span>
+            </div>
+            <div class="buffer-divider"></div>
+            <div class="buffer-pill" id="bufferPillBuffer">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span class="bpill-label">Buffer</span>
+              <span class="bpill-val" id="bufferValBuffer">-</span>
+            </div>
+            <div class="buffer-divider"></div>
+            <div class="buffer-pill" id="bufferPillUsed">
+              <i class="fa-solid fa-fire-flame-curved"></i>
+              <span class="bpill-label">Used</span>
+              <span class="bpill-val" id="bufferValUsed">-</span>
+            </div>
+            <div class="buffer-divider"></div>
+            <div class="buffer-pill" id="bufferPillRemaining">
+              <i class="fa-solid fa-shield-check"></i>
+              <span class="bpill-label">Remaining</span>
+              <span class="bpill-val" id="bufferValRemaining">-</span>
+            </div>
+            <div class="buffer-divider" id="bufferBeyondDivider" style="display:none;"></div>
+            <div class="buffer-pill buffer-pill-danger" id="bufferPillBeyond" style="display:none;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span class="bpill-label">Beyond Buffer</span>
+              <span class="bpill-val" id="bufferValBeyond">-</span>
+            </div>
+            <div class="buffer-status-badge" id="bufferStatusBadge">-</div>
+          </div>
+
+          <!-- Progress Track -->
+          <div class="buffer-track-wrap">
+            <div class="buffer-track">
+              <div class="buffer-track-planned" id="bufferTrackPlanned" style="width:0%;" title="Planned Days"></div>
+              <div class="buffer-track-used" id="bufferTrackUsed" style="width:0%;" title="Buffer Used"></div>
+              <div class="buffer-track-beyond" id="bufferTrackBeyond" style="width:0%;" title="Beyond Buffer"></div>
+            </div>
+            <div class="buffer-track-labels">
+              <span id="bufferTrackLabelStart">Start</span>
+              <span id="bufferTrackLabelEnd">Planned End</span>
+              <span id="bufferTrackLabelBuffer">Buffer End</span>
+            </div>
           </div>
         </div>
       </div>
@@ -402,6 +452,24 @@
             <div class="form-group col-6">
               <label class="form-label">Project End Date</label>
               <input type="date" id="newSiteEndDate" class="form-control">
+            </div>
+          </div>
+
+          <!-- Row 4: Buffer Days -->
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label class="form-label">
+                <i class="fa-solid fa-clock-rotate-left" style="color:#7c3aed;"></i>
+                Buffer Days (Time Bank)
+                <span class="form-hint">Extra days allowed beyond planned duration</span>
+              </label>
+              <input type="number" id="newSiteBufferDays" class="form-control" placeholder="e.g. 5" min="0" max="365" value="0">
+            </div>
+            <div class="form-group col-6" style="display:flex;align-items:flex-end;padding-bottom:4px;">
+              <div class="buffer-info-tip">
+                <i class="fa-solid fa-circle-info"></i>
+                If project exceeds planned duration, buffer days will be consumed automatically. Overdue days will show once buffer is exhausted.
+              </div>
             </div>
           </div>
         </div>

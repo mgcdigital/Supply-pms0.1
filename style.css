@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --primary: #5c3cf6;
   --primary-hover: #4828e0;
   --primary-light: #f0edff;
@@ -708,6 +708,7 @@ body {
 }
 
 /* Base icon button */
+.btn-icon-done,
 .btn-icon-update,
 .btn-icon-edit,
 .btn-icon-del {
@@ -723,7 +724,19 @@ body {
   transition: all 0.15s ease;
 }
 
-/* Update / Progress icon — Blue */
+/* Mark Done / Complete icon — Green Checkmark */
+.btn-icon-done {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+.btn-icon-done:hover {
+  background: #16a34a;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(22, 163, 74, 0.4);
+}
+
+/* Update / Progress icon — kept as alias (blue) */
 .btn-icon-update {
   background: #eff6ff;
   color: #2563eb;
@@ -2202,3 +2215,168 @@ body {
 }
 
 
+
+/* =====================================================
+   PROJECT BUFFER DAYS / TIME BANK — STYLES
+   ===================================================== */
+
+/* Info tip in form */
+.buffer-info-tip {
+  font-size: 0.78rem;
+  color: #7c3aed;
+  background: #f5f3ff;
+  border: 1px solid #ede9fe;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  line-height: 1.45;
+}
+.buffer-info-tip i { margin-top: 1px; flex-shrink: 0; }
+
+/* Buffer Status Bar container */
+.buffer-status-bar {
+  margin-top: 12px;
+  background: linear-gradient(135deg, #faf5ff 0%, #f0f9ff 100%);
+  border: 1px solid #e9d5ff;
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+/* Pill row */
+.buffer-bar-inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.buffer-pill {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  min-width: 80px;
+  gap: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.buffer-pill i {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.bpill-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+}
+
+.bpill-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Pill variants */
+.buffer-pill-safe { border-color: #a7f3d0 !important; background: #ecfdf5 !important; }
+.buffer-pill-safe i { color: #059669 !important; }
+.buffer-pill-safe .bpill-val { color: #047857 !important; }
+
+.buffer-pill-warn { border-color: #fcd34d !important; background: #fffbeb !important; }
+.buffer-pill-warn i { color: #d97706 !important; }
+.buffer-pill-warn .bpill-val { color: #b45309 !important; }
+
+.buffer-pill-critical { border-color: #fca5a5 !important; background: #fff1f2 !important; }
+.buffer-pill-critical i { color: #dc2626 !important; }
+.buffer-pill-critical .bpill-val { color: #b91c1c !important; }
+
+.buffer-pill-danger {
+  border-color: #f97316 !important;
+  background: #fff7ed !important;
+  animation: pulse-danger 1.5s ease-in-out infinite;
+}
+.buffer-pill-danger i { color: #ea580c !important; }
+.buffer-pill-danger .bpill-val { color: #c2410c !important; }
+
+@keyframes pulse-danger {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249,115,22,0.2); }
+  50% { box-shadow: 0 0 0 5px rgba(249,115,22,0); }
+}
+
+.buffer-divider {
+  width: 1px;
+  height: 28px;
+  background: #cbd5e1;
+  flex-shrink: 0;
+}
+
+/* Status badge */
+.buffer-status-badge {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #475569;
+  white-space: nowrap;
+}
+.buffer-status-badge.badge-on-track { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.buffer-status-badge.badge-warning { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
+.buffer-status-badge.badge-in-buffer { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.buffer-status-badge.badge-overdue { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+
+/* Progress Track */
+.buffer-track-wrap { margin-top: 6px; }
+
+.buffer-track {
+  display: flex;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  gap: 0;
+}
+
+.buffer-track-planned {
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+  border-radius: 6px 0 0 6px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+.buffer-track-used {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  transition: width 0.5s ease;
+  min-width: 0;
+}
+.buffer-track-beyond {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+  border-radius: 0 6px 6px 0;
+  transition: width 0.5s ease;
+  min-width: 0;
+}
+
+.buffer-track-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: #94a3b8;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.form-hint {
+  display: block;
+  font-size: 0.73rem;
+  color: #94a3b8;
+  font-weight: 400;
+  margin-top: 2px;
+}

@@ -1,4 +1,4 @@
-// Service PMS Application Logic
+﻿// Service PMS Application Logic
 
 // Local storage key
 const STORAGE_KEY = 'SERVICE_PMS_DATA_V5';
@@ -427,6 +427,174 @@ function openSiteTasks(siteId) {
 }
 
 // Render Tasks of the Active Site
+// ================= PROJECT BUFFER DAYS / TIME BANK =================
+/**
+ * Calculates buffer stats for a project site.
+ * Returns: { plannedDays, bufferAllowed, actualDays, bufferUsed, bufferRemaining, beyondBuffer, status, isOverdue }
+ */
+function calcBufferStats(site) {
+  const bufferAllowed = parseInt(site.bufferDays) || 0;
+
+  if (!site.startDate) {
+    return {
+      plannedDays: 0, bufferAllowed, actualDays: 0,
+      bufferUsed: 0, bufferRemaining: bufferAllowed,
+      beyondBuffer: 0, status: 'Not Started', isOverdue: false
+    };
+  }
+
+  const start = new Date(site.startDate);
+  start.setHours(0, 0, 0, 0);
+
+  // Planned end = project end date (from site.endDate)
+  let plannedEnd = null;
+  if (site.endDate) {
+    plannedEnd = new Date(site.endDate);
+    plannedEnd.setHours(0, 0, 0, 0);
+  }
+
+  const plannedDays = plannedEnd
+    ? Math.max(0, Math.round((plannedEnd - start) / 86400000))
+    : 0;
+
+  // Actual days = today (if ongoing) based on overall project progress
+  const stats = getSiteStats(site);
+  const isFullyDone = stats.total > 0 && stats.done === stats.total;
+
+  // Use today as reference for actual elapsed days
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const actualDays = Math.max(0, Math.round((today - start) / 86400000));
+
+  // Buffer calculations
+  const overPlanned = Math.max(0, actualDays - plannedDays);
+  const bufferUsed = Math.min(overPlanned, bufferAllowed);
+  const bufferRemaining = Math.max(0, bufferAllowed - overPlanned);
+  const beyondBuffer = Math.max(0, overPlanned - bufferAllowed);
+
+  // Status label
+  let status;
+  if (actualDays <= 0) {
+    status = 'Not Started';
+  } else if (actualDays < plannedDays) {
+    const savedDays = plannedDays - actualDays;
+    status = isFullyDone ? `Completed Early (+${savedDays}d saved)` : 'On Track';
+  } else if (actualDays === plannedDays) {
+    status = isFullyDone ? 'Completed on Time' : 'At Deadline';
+  } else if (beyondBuffer === 0 && bufferUsed > 0) {
+    status = `In Buffer (${bufferUsed}d used)`;
+  } else if (beyondBuffer === 0 && bufferUsed === bufferAllowed && bufferAllowed > 0) {
+    status = 'Buffer Fully Used';
+  } else if (beyondBuffer > 0) {
+    status = `${beyondBuffer}d Beyond Buffer`;
+  } else {
+    status = 'On Track';
+  }
+
+  return {
+    plannedDays,
+    bufferAllowed,
+    actualDays,
+    bufferUsed,
+    bufferRemaining,
+    beyondBuffer,
+    status,
+    isOverdue: beyondBuffer > 0,
+    isFullyDone
+  };
+}
+
+/**
+ * Renders the Buffer Status Bar in the project header.
+ */
+function renderBufferBar(site) {
+  const bar = document.getElementById('bufferStatusBar');
+  if (!bar) return;
+
+  const b = calcBufferStats(site);
+
+  if (b.plannedDays === 0 && b.bufferAllowed === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = '';
+
+  // Fill pill values
+  document.getElementById('bufferValPlan').textContent = `${b.plannedDays} Days`;
+  document.getElementById('bufferValBuffer').textContent = `${b.bufferAllowed} Days`;
+  document.getElementById('bufferValUsed').textContent = `${b.bufferUsed} Days`;
+  document.getElementById('bufferValRemaining').textContent = `${b.bufferRemaining} Days`;
+
+  // Color coding for Used pill
+  const usedPill = document.getElementById('bufferPillUsed');
+  usedPill.className = 'buffer-pill';
+  if (b.bufferUsed === 0) {
+    usedPill.classList.add('buffer-pill-safe');
+  } else if (b.bufferUsed < b.bufferAllowed) {
+    usedPill.classList.add('buffer-pill-warn');
+  } else {
+    usedPill.classList.add('buffer-pill-critical');
+  }
+
+  // Color coding for Remaining pill
+  const remainPill = document.getElementById('bufferPillRemaining');
+  remainPill.className = 'buffer-pill';
+  if (b.bufferRemaining > 0) {
+    remainPill.classList.add('buffer-pill-safe');
+  } else {
+    remainPill.classList.add('buffer-pill-critical');
+  }
+
+  // Beyond Buffer pill
+  const beyondPill = document.getElementById('bufferPillBeyond');
+  const beyondDiv = document.getElementById('bufferBeyondDivider');
+  if (b.beyondBuffer > 0) {
+    beyondPill.style.display = '';
+    beyondDiv.style.display = '';
+    document.getElementById('bufferValBeyond').textContent = `${b.beyondBuffer} Days`;
+  } else {
+    beyondPill.style.display = 'none';
+    beyondDiv.style.display = 'none';
+  }
+
+  // Status badge
+  const statusBadge = document.getElementById('bufferStatusBadge');
+  statusBadge.textContent = b.status;
+  statusBadge.className = 'buffer-status-badge';
+  if (b.isOverdue) {
+    statusBadge.classList.add('badge-overdue');
+  } else if (b.bufferUsed > 0) {
+    statusBadge.classList.add('badge-in-buffer');
+  } else if (b.actualDays < b.plannedDays || b.isFullyDone) {
+    statusBadge.classList.add('badge-on-track');
+  } else {
+    statusBadge.classList.add('badge-warning');
+  }
+
+  // Progress track bar
+  const totalVisualDays = b.plannedDays + b.bufferAllowed + Math.max(0, b.beyondBuffer);
+  if (totalVisualDays > 0) {
+    const plannedPct = Math.min(100, (b.plannedDays / totalVisualDays) * 100);
+    // Show actual elapsed within the planned zone
+    const elapsedInPlanned = Math.min(b.actualDays, b.plannedDays);
+    const usedPct = Math.min(100 - plannedPct, (b.bufferUsed / totalVisualDays) * 100);
+    const beyondPct = (b.beyondBuffer / totalVisualDays) * 100;
+
+    document.getElementById('bufferTrackPlanned').style.width = `${plannedPct}%`;
+    document.getElementById('bufferTrackUsed').style.width = `${usedPct}%`;
+    document.getElementById('bufferTrackBeyond').style.width = `${beyondPct}%`;
+  }
+
+  document.getElementById('bufferTrackLabelStart').textContent = site.startDate || 'Start';
+  document.getElementById('bufferTrackLabelEnd').textContent = site.endDate ? `Planned: ${site.endDate}` : 'Planned End';
+  const bufferEndDate = (() => {
+    if (!site.endDate || !b.bufferAllowed) return '';
+    const d = new Date(site.endDate);
+    d.setDate(d.getDate() + b.bufferAllowed);
+    return `Buffer End: ${d.toISOString().split('T')[0]}`;
+  })();
+  document.getElementById('bufferTrackLabelBuffer').textContent = bufferEndDate;
+}
 function renderSiteTasks() {
   const site = sitesData.find(s => s.id === activeSiteId);
   if (!site) return;
@@ -462,6 +630,9 @@ function renderSiteTasks() {
   document.getElementById('metaVRE').textContent = site.vre || 'Aarti Bala :- 8824133320';
   document.getElementById('metaIncharge').textContent = site.siteIncharge || 'Dinesh Purohit :- 8003698657';
   document.getElementById('metaCoordinator').textContent = site.coordinator || 'Tulsi Sen :- 9875789834';
+
+  // Render Buffer Status Bar
+  renderBufferBar(site);
 
   const tbody = document.getElementById('tasksTableBody');
   tbody.innerHTML = '';
@@ -511,7 +682,11 @@ function renderSiteTasks() {
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>`
-        : `<span class="view-only-badge"><i class="fa-solid fa-lock"></i> View Only</span>`;
+        : `<div class="action-buttons-cell">
+            <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit Section">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+          </div>`;
       tr.innerHTML = `
         <td class="uid-cell">
           <i class="fa-solid fa-folder-open text-primary"></i> ${task.id}
@@ -596,8 +771,8 @@ function renderTaskActionColumn(task) {
   if (currentUserRole === 'Super Admin') {
     return `
       <div class="action-buttons-cell">
-        <button class="btn-icon-update" onclick="openUpdateModal('${task.id}')" title="Update progress">
-          <i class="fa-solid fa-rotate-right"></i>
+        <button class="btn-icon-done" onclick="openUpdateModal('${task.id}')" title="Mark as Done / Update Progress">
+          <i class="fa-solid fa-circle-check"></i>
         </button>
         <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit task details">
           <i class="fa-solid fa-pen"></i>
@@ -608,8 +783,17 @@ function renderTaskActionColumn(task) {
       </div>
     `;
   } else {
-    // Normal User / Admin: View Only
-    return `<span class="view-only-badge"><i class="fa-solid fa-lock"></i> View Only</span>`;
+    // Admin: Can mark done & edit, but cannot delete
+    return `
+      <div class="action-buttons-cell">
+        <button class="btn-icon-done" onclick="openUpdateModal('${task.id}')" title="Mark as Done / Update Progress">
+          <i class="fa-solid fa-circle-check"></i>
+        </button>
+        <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit task details">
+          <i class="fa-solid fa-pen"></i>
+        </button>
+      </div>
+    `;
   }
 }
 
@@ -975,6 +1159,7 @@ function openAddSiteModal(siteToEdit = null) {
     document.getElementById('newSiteDEO').value = siteToEdit.deo || '';
     document.getElementById('newSiteStartDate').value = siteToEdit.startDate || '';
     document.getElementById('newSiteEndDate').value = siteToEdit.endDate || '';
+    document.getElementById('newSiteBufferDays').value = siteToEdit.bufferDays !== undefined ? siteToEdit.bufferDays : 0;
 
     const ownerParts = parseStakeholder(siteToEdit.owner);
     document.getElementById('newSiteOwnerName').value = ownerParts.name || 'DK Shriwal';
@@ -1065,6 +1250,7 @@ function submitNewSite() {
       site.deo = deo;
       site.startDate = startDate;
       site.endDate = endDate;
+      site.bufferDays = parseInt(document.getElementById('newSiteBufferDays').value) || 0;
       site.owner = owner;
       site.vre = vre;
       site.siteIncharge = siteIncharge;
@@ -1114,6 +1300,7 @@ function submitNewSite() {
     deo,
     startDate,
     endDate,
+    bufferDays: parseInt(document.getElementById('newSiteBufferDays').value) || 0,
     owner,
     vre,
     siteIncharge,
