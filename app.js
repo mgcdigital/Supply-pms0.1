@@ -1992,142 +1992,158 @@ function loadSamplePasteData() {
 
 // Parse pasted data from Google Sheet / Excel (Tab or Comma or Semicolon separated)
 function parsePastedRows() {
-  const text = document.getElementById('bulkPasteInput').value.trim();
-  if (!text) {
-    alert('Please paste rows into the text area first.');
-    return;
-  }
-
-  const site = sitesData.find(s => s.id === activeSiteId);
-  const defaultDoer = document.getElementById('bulkDefaultDoer').value.trim() || (site ? site.siteIncharge : 'Site Incharge');
-  const defaultQty = parseFloat(document.getElementById('bulkDefaultQty').value) || 1;
-  const defaultUOM = document.getElementById('bulkDefaultUOM').value.trim() || 'LS';
-
-  const lines = text.split(/\r?\n/);
-  const parsed = [];
-  let currentNum = site ? site.tasks.length + 1 : 1;
-
-  lines.forEach(line => {
-    const raw = line.trim();
-    if (!raw) return;
-
-    // Detect delimiter: tab (Google Sheets copy), comma, or pipe
-    let cols = [];
-    if (raw.includes('\t')) {
-      cols = raw.split('\t');
-    } else if (raw.includes('|')) {
-      cols = raw.split('|');
-    } else if (raw.includes(',')) {
-      cols = raw.split(',');
-    } else {
-      cols = [raw];
+  try {
+    const textEl = document.getElementById('bulkPasteInput');
+    if (!textEl) {
+      alert('Error: Paste input not found');
+      return;
     }
-    cols = cols.map(c => c.trim());
-
-    // Skip known header lines
-    const firstColLower = (cols[0] || '').toLowerCase();
-    const secondColLower = (cols[1] || '').toLowerCase();
-    if (firstColLower.includes('wbs') || firstColLower.includes('s.no') || firstColLower.includes('serial') ||
-        secondColLower.includes('task title') || secondColLower.includes('description')) {
+    const text = textEl.value.trim();
+    if (!text) {
+      alert('Please paste rows into the text area first.');
       return;
     }
 
-    let wbs = '';
-    let title = '';
-    let doer = defaultDoer;
-    let manpower = '6';
-    let duration = 7;
-    let startDate = '';
-    let endDate = '';
-    let qty = defaultQty;
-    let uom = defaultUOM;
+    const site = sitesData.find(s => s.id === activeSiteId);
+    const defaultDoerEl = document.getElementById('bulkDefaultDoer');
+    const defaultQtyEl = document.getElementById('bulkDefaultQty');
+    const defaultUOMEl = document.getElementById('bulkDefaultUOM');
 
-    if (cols.length === 1) {
-      // Single column: Task description
-      title = cols[0];
-    } else if (cols.length === 2) {
-      // Col 0: WBS/Number, Col 1: Title
-      wbs = cols[0];
-      title = cols[1];
-    } else {
-      // Full table row from Google Sheet
-      // Standard structure: WBS | Title | Incharge/Doer | Manpower | Start | End | Duration...
-      wbs = cols[0];
-      title = cols[1];
+    const defaultDoer = (defaultDoerEl ? defaultDoerEl.value.trim() : '') || (site ? site.siteIncharge : 'Site Incharge');
+    const defaultQty = defaultQtyEl ? (parseFloat(defaultQtyEl.value) || 1) : 1;
+    const defaultUOM = (defaultUOMEl ? defaultUOMEl.value.trim() : '') || 'LS';
 
-      // Col 2: Doer / Incharge
-      if (cols[2] && /[a-zA-Z]/.test(cols[2])) {
-        doer = cols[2];
+    const lines = text.split(/\r?\n/);
+    const parsed = [];
+    let currentNum = site && site.tasks ? site.tasks.length + 1 : 1;
+
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+      const raw = lines[lineIndex].trim();
+      if (!raw) continue;
+
+      let cols = [];
+      if (raw.includes('\t')) {
+        cols = raw.split('\t');
+      } else if (raw.includes('|')) {
+        cols = raw.split('|');
+      } else if (raw.includes(',')) {
+        cols = raw.split(',');
+      } else {
+        cols = [raw];
+      }
+      cols = cols.map(c => (c || '').trim());
+
+      // Skip header lines
+      const c0 = (cols[0] || '').toLowerCase();
+      const c1 = (cols[1] || '').toLowerCase();
+      if (c0.includes('wbs') || c0.includes('s.no') || c0.includes('serial') ||
+          c1.includes('task title') || c1.includes('description') || c0.includes('company name')) {
+        continue;
       }
 
-      // Col 3: Manpower
-      if (cols[3] && !isNaN(cols[3])) {
-        manpower = String(cols[3]);
-      }
+      let wbs = '';
+      let title = '';
+      let doer = defaultDoer;
+      let manpower = '6';
+      let duration = 7;
+      let startDate = '';
+      let endDate = '';
+      let qty = defaultQty;
+      let uom = defaultUOM;
 
-      // Remaining columns: find dates & duration
-      for (let i = 4; i < cols.length; i++) {
-        const val = cols[i];
-        if (!val) continue;
+      if (cols.length === 1) {
+        title = cols[0];
+      } else if (cols.length === 2) {
+        wbs = cols[0];
+        title = cols[1];
+      } else {
+        wbs = cols[0];
+        title = cols[1];
 
-        const dateMatch = parseAnyDate(val);
-        if (dateMatch) {
-          if (!startDate) {
-            startDate = dateMatch;
-          } else if (!endDate) {
-            endDate = dateMatch;
+        // Column 2: Doer or Date
+        if (cols[2]) {
+          const possibleDate = parseAnyDate(cols[2]);
+          if (possibleDate) {
+            startDate = possibleDate;
+          } else if (/[a-zA-Z]/.test(cols[2])) {
+            doer = cols[2];
           }
-          continue;
         }
 
-        // If numeric duration
-        if (!isNaN(val) && Number(val) > 0 && Number(val) <= 1000 && duration === 7) {
-          duration = parseInt(val, 10);
+        // Column 3: Manpower or Date
+        if (cols[3]) {
+          const possibleDate = parseAnyDate(cols[3]);
+          if (possibleDate) {
+            if (!startDate) startDate = possibleDate;
+            else if (!endDate) endDate = possibleDate;
+          } else if (!isNaN(cols[3])) {
+            manpower = String(cols[3]);
+          }
+        }
+
+        // Remaining columns: Look for dates and duration
+        for (let i = 4; i < cols.length; i++) {
+          const val = cols[i];
+          if (!val) continue;
+
+          const dateMatch = parseAnyDate(val);
+          if (dateMatch) {
+            if (!startDate) {
+              startDate = dateMatch;
+            } else if (!endDate) {
+              endDate = dateMatch;
+            }
+            continue;
+          }
+
+          if (!isNaN(val) && Number(val) > 0 && Number(val) <= 1000 && duration === 7) {
+            duration = parseInt(val, 10);
+          }
         }
       }
 
-      // Also check if Col 2 was date instead of doer
-      const col2Date = parseAnyDate(cols[2]);
-      if (col2Date) {
-        startDate = col2Date;
-        doer = defaultDoer;
+      if (!title) continue;
+
+      // Extract qty hint from title if present like (6000 MTR)
+      const qtyMatch = title.match(/\((\d+(?:\.\d+)?)\s*([a-zA-Z]+)\)/i);
+      if (qtyMatch) {
+        qty = parseFloat(qtyMatch[1]);
+        uom = qtyMatch[2];
       }
+
+      parsed.push({
+        id: `PMS${String(currentNum++).padStart(5, '0')}`,
+        wbs: wbs || String(parsed.length + 1),
+        title: title,
+        totalQty: qty,
+        completedQty: 0,
+        uom: uom,
+        doer: doer,
+        manpower: manpower,
+        duration: duration,
+        startDate: startDate || new Date().toISOString().split('T')[0],
+        endDate: endDate || '',
+        progressPct: 0,
+        remark: '',
+        isHeader: false
+      });
     }
 
-    if (!title) return;
+    bulkParsedTasks = parsed;
+    renderBulkPreview();
 
-    // Check if title has qty hint like (6000 MTR)
-    const qtyMatch = title.match(/\((\d+(?:\.\d+)?)\s*([a-zA-Z]+)\)/i);
-    if (qtyMatch) {
-      qty = parseFloat(qtyMatch[1]);
-      uom = qtyMatch[2];
+    const countBadge = document.getElementById('parsedCountBadge');
+    if (countBadge) {
+      countBadge.textContent = `${parsed.length} tasks ready`;
+      countBadge.style.display = 'inline-block';
     }
 
-    parsed.push({
-      id: `PMS${String(currentNum++).padStart(5, '0')}`,
-      wbs: wbs || String(parsed.length + 1),
-      title: title,
-      totalQty: qty,
-      completedQty: 0,
-      uom: uom,
-      doer: doer,
-      manpower: manpower,
-      duration: duration,
-      startDate: startDate || new Date().toISOString().split('T')[0],
-      endDate: endDate || '',
-      progressPct: 0,
-      remark: '',
-      isHeader: false
-    });
-  });
-
-  bulkParsedTasks = parsed;
-  renderBulkPreview();
-
-  const countBadge = document.getElementById('parsedCountBadge');
-  if (countBadge) {
-    countBadge.textContent = `${parsed.length} tasks ready`;
-    countBadge.style.display = 'inline-block';
+    if (parsed.length === 0) {
+      alert('Could not detect any valid tasks. Please check the pasted text.');
+    }
+  } catch (err) {
+    console.error('Error parsing pasted rows:', err);
+    alert('Error reading pasted rows: ' + err.message);
   }
 }
 
@@ -2330,7 +2346,7 @@ function submitBulkTasks() {
     updatedBy: site.deo || 'Data Entry Operator'
   });
 
-  alert(`🎉 Successfully added ${tasksToAdd.length} tasks to ${site.name}!`);
+  alert(`✅ Successfully added ${tasksToAdd.length} tasks to ${site.name}!`);
 }
 
 // ================= EXPORT LIVE EXCEL SHEET (PLAN VS ACTUAL) =================
