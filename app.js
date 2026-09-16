@@ -21,12 +21,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function setupRoleBadges() {
   const doerBadge = document.querySelector('.role-badge.doer');
-  const adminBadge = document.querySelector('.role-badge.admin');
   const superAdminBadge = document.querySelector('.role-badge.super-admin');
 
   function updateRoleUI() {
     if (doerBadge) doerBadge.classList.toggle('active', currentUserRole === 'Doer');
-    if (adminBadge) adminBadge.classList.toggle('active', currentUserRole === 'Admin');
     if (superAdminBadge) superAdminBadge.classList.toggle('active', currentUserRole === 'Super Admin');
   }
 
@@ -35,15 +33,6 @@ function setupRoleBadges() {
   if (doerBadge) {
     doerBadge.addEventListener('click', () => {
       currentUserRole = 'Doer';
-      localStorage.setItem(ROLE_STORAGE_KEY, currentUserRole);
-      updateRoleUI();
-      if (activeSiteId) renderSiteTasks();
-    });
-  }
-
-  if (adminBadge) {
-    adminBadge.addEventListener('click', () => {
-      currentUserRole = 'Admin';
       localStorage.setItem(ROLE_STORAGE_KEY, currentUserRole);
       updateRoleUI();
       if (activeSiteId) renderSiteTasks();
@@ -746,7 +735,7 @@ function renderSiteTasks() {
     // If it's a section header row (e.g. WBS Category)
             if (task.isHeader) {
       tr.className = 'header-row';
-      const sectionActionHtml = (currentUserRole !== 'Doer') 
+      const sectionActionHtml = (currentUserRole === 'Super Admin') 
         ? `<div class="action-buttons-cell"><button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit Section"><i class="fa-solid fa-pen"></i></button></div>`
         : '';
       tr.innerHTML = `
@@ -832,10 +821,10 @@ function renderSiteTasks() {
 
 // Render Action column based on user role (Super Admin vs Admin/Normal User)
 function renderTaskActionColumn(task) {
-  // Doer only gets Mark Done (Checkmark) button. Pencil/Edit is hidden for Doer.
-  // Super Admin and Admin get both: Mark Done + Edit Pencil.
-  const isDoer = (currentUserRole === 'Doer');
-  const editBtnHtml = !isDoer ? `
+  // Super Admin gets both: Mark Done (✓) + Edit Pencil (✏️)
+  // Doer gets ONLY Mark Done (✓). Pencil is hidden.
+  const isSuperAdmin = (currentUserRole === 'Super Admin');
+  const editBtnHtml = isSuperAdmin ? `
     <button class="btn-icon-edit" onclick="openEditTaskModal('${task.id}')" title="Edit task details">
       <i class="fa-solid fa-pen"></i>
     </button>
@@ -884,8 +873,8 @@ function deleteSection(sectionId) {
 
 // ================= EDIT TASK MODAL =================
 function openEditTaskModal(taskId) {
-  if (currentUserRole === 'Doer') {
-    alert('Access Denied: Doer cannot edit task configurations.');
+  if (currentUserRole !== 'Super Admin') {
+    alert('Access Denied: Only Super Admin can edit task configurations.');
     return;
   }
   const site = sitesData.find(s => s.id === activeSiteId);
