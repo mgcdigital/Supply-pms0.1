@@ -29,7 +29,11 @@ const SiteSchema = new mongoose.Schema({
   technicalPerson: { type: String, default: 'Heera lal Ji (8003698656)' },
   purchaserPerson: { type: String, default: 'Ronak Ji (8107688615)' },
   vrePerson: { type: String, default: 'Aarti Bala (8824133320)' },
-  projectOwner: { type: String, default: '' }
+  projectOwner: { type: String, default: '' },
+  status: { type: String, enum: ['ACTIVE', 'COMPLETED'], default: 'ACTIVE' },
+  completed_at: { type: Date },
+  completed_by: { type: String, default: '' },
+  completion_note: { type: String, default: '' }
 }, { timestamps: true });
 
 const SubStepSchema = new mongoose.Schema({

@@ -134,7 +134,7 @@ app.get('/api/sites', async (req, res) => {
 
 app.post('/api/sites', async (req, res) => {
   try {
-    const { siteName, companyName, projectTitle, poNumber, dataEntryOperator, processCoordinator, technicalPerson, purchaserPerson, vrePerson, projectOwner } = req.body;
+    const { siteName, companyName, projectTitle, poNumber, dataEntryOperator, processCoordinator, technicalPerson, purchaserPerson, vrePerson, projectOwner, status, completed_at, completed_by, completion_note } = req.body;
     if (!siteName) return res.status(400).json({ error: 'Site name is required.' });
 
     const existing = await Site.findOne({ siteName: siteName.trim() });
@@ -182,7 +182,11 @@ app.put('/api/sites/:id', async (req, res) => {
         technicalPerson: technicalPerson !== undefined ? technicalPerson : oldSite.technicalPerson,
         purchaserPerson: purchaserPerson !== undefined ? purchaserPerson : oldSite.purchaserPerson,
         vrePerson: vrePerson !== undefined ? vrePerson : oldSite.vrePerson,
-        projectOwner: projectOwner !== undefined ? projectOwner : oldSite.projectOwner
+        projectOwner: projectOwner !== undefined ? projectOwner : oldSite.projectOwner,
+        status: status !== undefined ? status : (oldSite.status || 'ACTIVE'),
+        completed_at: completed_at !== undefined ? completed_at : oldSite.completed_at,
+        completed_by: completed_by !== undefined ? completed_by : oldSite.completed_by,
+        completion_note: completion_note !== undefined ? completion_note : oldSite.completion_note
       },
       { new: true }
     );

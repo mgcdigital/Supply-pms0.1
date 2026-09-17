@@ -1728,6 +1728,92 @@
       if (datalist) datalist.innerHTML = dlHtml;
     }
 
+    
+    let currentProjectTabFilter = 'ACTIVE';
+
+    function setProjectTabFilter(tab) {
+      currentProjectTabFilter = tab;
+      const btnActive = document.getElementById('tabProjectsActive');
+      const btnCompleted = document.getElementById('tabProjectsCompleted');
+
+      if (tab === 'ACTIVE') {
+        btnActive.className = 'px-3 py-1 rounded-lg transition bg-white dark:bg-darkcard text-indigo-600 dark:text-indigo-400 shadow-xs flex items-center gap-1.5';
+        btnCompleted.className = 'px-3 py-1 rounded-lg transition text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5';
+      } else {
+        btnCompleted.className = 'px-3 py-1 rounded-lg transition bg-white dark:bg-darkcard text-indigo-600 dark:text-indigo-400 shadow-xs flex items-center gap-1.5';
+        btnActive.className = 'px-3 py-1 rounded-lg transition text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5';
+      }
+      loadSitesList();
+    }
+
+    function openCompleteSiteModal(siteId, siteName) {
+      document.getElementById('completeSiteId').value = siteId;
+      document.getElementById('completeSiteNameDisplay').innerText = siteName;
+      document.getElementById('completeSiteNoteInput').value = '';
+      toggleModal('completeSiteModal', true);
+      lucide.createIcons();
+    }
+
+    async function confirmMarkSiteCompleted() {
+      const siteId = document.getElementById('completeSiteId').value;
+      const note = document.getElementById('completeSiteNoteInput').value.trim();
+      const completedBy = (currentUser && currentUser.name) ? currentUser.name : 'Super Admin';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/sites/${siteId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'COMPLETED',
+            completed_at: new Date(),
+            completed_by: completedBy,
+            completion_note: note
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('completeSiteModal', false);
+          // Update in-memory site data
+          const idx = allSitesList.findIndex(s => s._id === siteId);
+          if (idx !== -1) {
+            allSitesList[idx] = { ...allSitesList[idx], ...json.data, status: 'COMPLETED' };
+          }
+          await loadSitesList();
+        } else {
+          alert(json.error || 'Failed to complete project.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      }
+    }
+
+    async function reopenProjectSite(siteId, siteName) {
+      if (!confirm(`Are you sure you want to reopen project "${siteName}" and return it to Active Projects?`)) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/sites/${siteId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'ACTIVE',
+            completed_at: null,
+            completion_note: ''
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          const idx = allSitesList.findIndex(s => s._id === siteId);
+          if (idx !== -1) {
+            allSitesList[idx] = { ...allSitesList[idx], ...json.data, status: 'ACTIVE' };
+          }
+          await loadSitesList();
+        } else {
+          alert(json.error || 'Failed to reopen project.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      }
+    }
+
     async function loadSitesList() {
       const container = document.getElementById('sitesCardsContainer');
       if (!container) return;
@@ -2615,5 +2701,39 @@
       }
     }
   </script>
+
+  <!-- Mark Site Completed Modal -->
+  <div id="completeSiteModal" class="modal-backdrop fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 dark:border-darkborder space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center font-bold">
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+          </div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Mark Project as Completed</h3>
+        </div>
+        <button onclick="toggleModal('completeSiteModal', false)" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <input type="hidden" id="completeSiteId">
+      <p class="text-xs text-slate-600 dark:text-slate-300">
+        Are you sure you want to mark <span id="completeSiteNameDisplay" class="font-bold text-indigo-600 dark:text-indigo-400"></span> as completed?
+      </p>
+
+      <div>
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Optional Completion Note / Remarks</label>
+        <textarea id="completeSiteNoteInput" rows="2" placeholder="e.g. Commissioning and handover completed" class="w-full border border-slate-300 dark:border-darkborder rounded px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 dark:text-white outline-none"></textarea>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="toggleModal('completeSiteModal', false)" class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+        <button type="button" onclick="confirmMarkSiteCompleted()" class="px-3.5 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-xs flex items-center gap-1.5">
+          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+          <span>Confirm Completion</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
