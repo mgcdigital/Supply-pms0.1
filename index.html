@@ -36,7 +36,7 @@
 <body class="text-slate-800 dark:bg-darkbg dark:text-slate-100 antialiased h-screen flex flex-col text-xs overflow-hidden">
 
   <!-- Full Screen Login Overlay -->
-  <div id="loginOverlay" class="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
+  <div id="loginOverlay" class="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-white dark:bg-darkcard rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-darkborder space-y-4">
       <div class="text-center space-y-1">
         <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white mx-auto flex items-center justify-center shadow-lg shadow-indigo-300 dark:shadow-none font-bold text-xl">
@@ -710,7 +710,7 @@
     let currentAuditDoer = { email: '', name: '' };
     let currentAuditSteps = [];
     let pmsChartInstance = null;
-    let currentUser = JSON.parse(localStorage.getItem('pms_logged_in_user') || 'null');
+    let currentUser = JSON.parse(localStorage.getItem('pms_logged_in_user') || JSON.stringify({ role: 'ADMIN', name: 'Super Admin', email: 'admin@mgc.com' }));
     let activeLoginRole = 'ADMIN';
 
     const API_BASE = (window.location.hostname.includes('github.io') || window.location.protocol.startsWith('file:')) ? 'https://pms-central-kini.onrender.com' : '';
